@@ -1,0 +1,338 @@
+[
+  {
+    "question": "What did a typical day look like for you as a Software Engineer?",
+    "answer": "A typical day involved reviewing pull requests, attending stand-up, implementing features in our sprint, fixing bugs from the backlog, pairing with teammates on tricky issues, and updating tickets so stakeholders had visibility.",
+    "score": 76,
+    "category": "cv_behavioral"
+  },
+  {
+    "question": "What did a typical day look like for you as a Software Engineer?",
+    "answer": "A typical day involved reviewing pull requests, attending stand-up, implementing features in our sprint, fixing bugs from the backlog, pairing with teammates on tricky issues, and updating tickets so stakeholders had visibility. I also documented decisions for the team.",
+    "score": 78,
+    "category": "cv_behavioral_aug"
+  },
+  {
+    "question": "What did a typical day look like for you as a Software Engineer?",
+    "answer": "I would start with code review then standup meetings developing and testing features fixing bugs and collaborating with the team to ship updates we also did design discussions and documentation",
+    "score": 68,
+    "category": "cv_behavioral"
+  },
+  {
+    "question": "What did a typical day look like for you as a Software Engineer?",
+    "answer": "I would start with code review then standup meetings developing and testing features fixing bugs and collaborating with the team to ship updates we also did design discussions and documentation I also documented decisions for the team.",
+    "score": 70,
+    "category": "cv_behavioral_aug"
+  },
+  {
+    "question": "What did a typical day look like for you as a Software Engineer?",
+    "answer": "a typical day involved reviewing code attending stand up meetings developing and testing features fixing works and collaborative with teenage to deliver updates",
+    "score": 62,
+    "category": "cv_behavioral_stt"
+  },
+  {
+    "question": "Describe your day to day responsibilities as a developer.",
+    "answer": "Morning standup, then deep work on assigned stories, code reviews for teammates, writing unit tests, deploying to staging, and responding to production alerts when on call.",
+    "score": 78,
+    "category": "cv_behavioral"
+  },
+  {
+    "question": "Describe your day to day responsibilities as a developer.",
+    "answer": "Morning standup, then deep work on assigned stories, code reviews for teammates, writing unit tests, deploying to staging, and responding to production alerts when on call. I also documented decisions for the team.",
+    "score": 80,
+    "category": "cv_behavioral_aug"
+  },
+  {
+    "question": "What was the most impactful project you delivered as a Software Engineer?",
+    "answer": "I led migration of a monolith to microservices which cut deployment time from hours to minutes and improved reliability we used kubernetes and observability tooling and documented runbooks",
+    "score": 82,
+    "category": "cv_technical"
+  },
+  {
+    "question": "What was the most impactful project you delivered as a Software Engineer?",
+    "answer": "I led migration of a monolith to microservices which cut deployment time from hours to minutes and improved reliability we used kubernetes and observability tooling and documented runbooks I also documented decisions for the team.",
+    "score": 84,
+    "category": "cv_technical_aug"
+  },
+  {
+    "question": "What was the most impactful project you delivered as an Architect?",
+    "answer": "The most impactful project I led as an architect was designing a scalable microservices-based platform that reduced system downtime significantly and enabled rapid feature releases across multiple teams.",
+    "score": 84,
+    "category": "cv_technical"
+  },
+  {
+    "question": "What was the most impactful project you delivered as an Architect?",
+    "answer": "The most impactful project I led as an architect was designing a scalable microservices-based platform that reduced system downtime significantly and enabled rapid feature releases across multiple teams. I also documented decisions for the team.",
+    "score": 86,
+    "category": "cv_technical_aug"
+  },
+  {
+    "question": "What was the most impactful project you delivered as a Architect?",
+    "answer": "the most effectful project I LED as an architect was designing a scalebal micro services based platform that reduced system downtime significantly and enable debit feature releases across multiple games",
+    "score": 74,
+    "category": "cv_technical_stt"
+  },
+  {
+    "question": "What was the most impactful project you delivered as a Architect?",
+    "answer": "the most effectful project I LED as an architect was designing a scalebal micro services based platform that reduced system downtime significantly and enable debit feature releases across multiple games I also documented decisions for the team.",
+    "score": 76,
+    "category": "cv_technical_stt_aug"
+  },
+  {
+    "question": "Tell me about a complex system you designed.",
+    "answer": "I designed an event-driven ordering service with idempotent consumers, outbox pattern for consistency, and autoscaling based on queue depth. We achieved 99.9% availability over six months.",
+    "score": 86,
+    "category": "cv_technical"
+  },
+  {
+    "question": "Tell me about a complex system you designed.",
+    "answer": "I designed an event-driven ordering service with idempotent consumers, outbox pattern for consistency, and autoscaling based on queue depth. We achieved 99.9% availability over six months. I also documented decisions for the team.",
+    "score": 88,
+    "category": "cv_technical_aug"
+  },
+  {
+    "question": "How do you approach security in a web application?",
+    "answer": "I follow secure coding practices: strong authentication and authorization, input validation and output encoding, parameterized queries to prevent SQL injection, CSRF tokens, secure headers, HTTPS everywhere, secrets in vaults, and regular dependency scanning plus penetration testing.",
+    "score": 82,
+    "category": "cv_technical"
+  },
+  {
+    "question": "How do you approach security in a web application?",
+    "answer": "I follow secure coding practices: strong authentication and authorization, input validation and output encoding, parameterized queries to prevent SQL injection, CSRF tokens, secure headers, HTTPS everywhere, secrets in vaults, and regular dependency scanning plus penetration testing. I also documented decisions for the team.",
+    "score": 84,
+    "category": "cv_technical_aug"
+  },
+  {
+    "question": "How do you approach security in a web application?",
+    "answer": "I approach web security by following secure coding practices enforcing authentication and authorisation validating and sanitizing all inputs protecting data with encryption using secure headers and https and continuously testing for vulnerability",
+    "score": 76,
+    "category": "cv_technical"
+  },
+  {
+    "question": "How do you approach security in a web application?",
+    "answer": "I approach web security by following secure coding practices enforcing authentication and authorisation validating and sanitizing all inputs protecting data with encryption using secure headers and https and continuously testing for vulnerability I also documented decisions for the team.",
+    "score": 78,
+    "category": "cv_technical_aug"
+  },
+  {
+    "question": "How do you handle OWASP risks in your apps?",
+    "answer": "We threat-model each feature, use OWASP ASVS as a checklist, enforce CSP and HSTS, rate limiting on auth endpoints, and train developers on XSS and injection prevention.",
+    "score": 80,
+    "category": "cv_technical"
+  },
+  {
+    "question": "How do you handle OWASP risks in your apps?",
+    "answer": "We threat-model each feature, use OWASP ASVS as a checklist, enforce CSP and HSTS, rate limiting on auth endpoints, and train developers on XSS and injection prevention. I also documented decisions for the team.",
+    "score": 82,
+    "category": "cv_technical_aug"
+  },
+  {
+    "question": "Tell me about a time you identified a process inefficiency and fixed it.",
+    "answer": "We had slow manual deployments taking half a day. I introduced a CI/CD pipeline with automated tests and gated releases, standardized code review SLAs, and cut release time to under an hour while improving quality.",
+    "score": 81,
+    "category": "cv_behavioral"
+  },
+  {
+    "question": "Tell me about a time you identified a process inefficiency and fixed it.",
+    "answer": "We had slow manual deployments taking half a day. I introduced a CI/CD pipeline with automated tests and gated releases, standardized code review SLAs, and cut release time to under an hour while improving quality. I also documented decisions for the team.",
+    "score": 83,
+    "category": "cv_behavioral_aug"
+  },
+  {
+    "question": "Tell me about a time you identified a process inefficiency and fixed it.",
+    "answer": "identified slow manual deployment and code review bottlenecks introduced automated CI cd pipelines and standardised review processes which reduced release time and improved team efficiency",
+    "score": 74,
+    "category": "cv_behavioral_stt"
+  },
+  {
+    "question": "Tell me about a time you identified a process inefficiency and fixed it.",
+    "answer": "identified slow manual deployment and code review bottlenecks introduced automated CI cd pipelines and standardised review processes which reduced release time and improved team efficiency I also documented decisions for the team.",
+    "score": 76,
+    "category": "cv_behavioral_stt_aug"
+  },
+  {
+    "question": "Describe improving engineering workflow at your last job.",
+    "answer": "I noticed flaky tests blocked merges. I fixed the root causes, added parallel test runs in CI, and required green builds before review. Merge frequency doubled in a month.",
+    "score": 79,
+    "category": "cv_behavioral"
+  },
+  {
+    "question": "Describe improving engineering workflow at your last job.",
+    "answer": "I noticed flaky tests blocked merges. I fixed the root causes, added parallel test runs in CI, and required green builds before review. Merge frequency doubled in a month. I also documented decisions for the team.",
+    "score": 81,
+    "category": "cv_behavioral_aug"
+  },
+  {
+    "question": "What are your two or three greatest professional strengths? Give examples.",
+    "answer": "Problem solving, system design, and collaboration. For example I improved latency by profiling and caching hot paths, I designed a service boundary that scaled to 10x traffic, and I facilitated cross-team API contracts.",
+    "score": 78,
+    "category": "cv_hr"
+  },
+  {
+    "question": "What are your two or three greatest professional strengths? Give examples.",
+    "answer": "Problem solving, system design, and collaboration. For example I improved latency by profiling and caching hot paths, I designed a service boundary that scaled to 10x traffic, and I facilitated cross-team API contracts. I also documented decisions for the team.",
+    "score": 80,
+    "category": "cv_hr_aug"
+  },
+  {
+    "question": "What are your two or three greatest professional strengths? Give examples.",
+    "answer": "My greatest strengths are problem solving system design thinking and collaboration for example I improved system performance by identifying bottlenecks and redesigning services built scalable architectures and worked closely with cross functional teams to deliver complex features efficiently",
+    "score": 72,
+    "category": "cv_hr_stt"
+  },
+  {
+    "question": "What are your two or three greatest professional strengths? Give examples.",
+    "answer": "My greatest strengths are problem solving system design thinking and collaboration for example I improved system performance by identifying bottlenecks and redesigning services built scalable architectures and worked closely with cross functional teams to deliver complex features efficiently I also documented decisions for the team.",
+    "score": 74,
+    "category": "cv_hr_stt_aug"
+  },
+  {
+    "question": "What are your greatest strengths as an engineer?",
+    "answer": "I communicate technical trade-offs clearly, I write maintainable code with tests, and I mentor juniors through pair programming and documentation.",
+    "score": 75,
+    "category": "cv_hr"
+  },
+  {
+    "question": "What are your greatest strengths as an engineer?",
+    "answer": "I communicate technical trade-offs clearly, I write maintainable code with tests, and I mentor juniors through pair programming and documentation. I also documented decisions for the team.",
+    "score": 77,
+    "category": "cv_hr_aug"
+  },
+  {
+    "question": "How do you approach system design for a new feature?",
+    "answer": "I clarify requirements and non-functional goals, sketch data flow and APIs, choose storage and consistency model, discuss trade-offs with stakeholders, prototype risky parts, and define observability and rollout strategy.",
+    "score": 80,
+    "category": "technical"
+  },
+  {
+    "question": "How do you approach system design for a new feature?",
+    "answer": "I clarify requirements and non-functional goals, sketch data flow and APIs, choose storage and consistency model, discuss trade-offs with stakeholders, prototype risky parts, and define observability and rollout strategy. I also documented decisions for the team.",
+    "score": 82,
+    "category": "technical_aug"
+  },
+  {
+    "question": "How do you approach system design for a new feature?",
+    "answer": "I clarify requirements define scope and constraints design architecture and components estimate data flow and scalability review trade offs implement test and iterate",
+    "score": 70,
+    "category": "technical_stt"
+  },
+  {
+    "question": "How do you approach system design for a new feature?",
+    "answer": "I clarify requirements define scope and constraints design architecture and components estimate data flow and scalability review trade offs implement test and iterate I also documented decisions for the team.",
+    "score": 72,
+    "category": "technical_stt_aug"
+  },
+  {
+    "question": "You listed Python as a skill. Tell me about the most complex thing you built using Python.",
+    "answer": "I built an ETL pipeline with pandas and asyncio workers that processed millions of rows nightly with retries and alerting, and cut manual reporting from 6 hours to automated runs.",
+    "score": 83,
+    "category": "cv_technical"
+  },
+  {
+    "question": "You listed Python as a skill. Tell me about the most complex thing you built using Python.",
+    "answer": "I built an ETL pipeline with pandas and asyncio workers that processed millions of rows nightly with retries and alerting, and cut manual reporting from 6 hours to automated runs. I also documented decisions for the team.",
+    "score": 85,
+    "category": "cv_technical_aug"
+  },
+  {
+    "question": "You listed C++ as a skill. Tell me about the most complex thing you built using C++.",
+    "answer": "A multithreaded compression utility with custom buffers and careful memory management; it improved throughput 3x over the baseline tool.",
+    "score": 81,
+    "category": "cv_technical"
+  },
+  {
+    "question": "You listed C++ as a skill. Tell me about the most complex thing you built using C++.",
+    "answer": "A multithreaded compression utility with custom buffers and careful memory management; it improved throughput 3x over the baseline tool. I also documented decisions for the team.",
+    "score": 83,
+    "category": "cv_technical_aug"
+  },
+  {
+    "question": "Describe a situation where you had to adapt to a major unexpected change.",
+    "answer": "During a project requirements changed last minute so I reassessed priorities refactored the design to fit the new scope and coordinated with the team to deliver on time",
+    "score": 73,
+    "category": "cv_behavioral_stt"
+  },
+  {
+    "question": "Describe a situation where you had to adapt to a major unexpected change.",
+    "answer": "During a project requirements changed last minute so I reassessed priorities refactored the design to fit the new scope and coordinated with the team to deliver on time I also documented decisions for the team.",
+    "score": 75,
+    "category": "cv_behavioral_stt_aug"
+  },
+  {
+    "question": "Describe a situation where you had to adapt to a major unexpected change.",
+    "answer": "When leadership pivoted the product mid-quarter, I re-scoped the backlog, ran a spike on the new stack, and delivered an MVP in two sprints while keeping stakeholders informed weekly.",
+    "score": 80,
+    "category": "cv_behavioral"
+  },
+  {
+    "question": "Describe a situation where you had to adapt to a major unexpected change.",
+    "answer": "When leadership pivoted the product mid-quarter, I re-scoped the backlog, ran a spike on the new stack, and delivered an MVP in two sprints while keeping stakeholders informed weekly. I also documented decisions for the team.",
+    "score": 82,
+    "category": "cv_behavioral_aug"
+  },
+  {
+    "question": "Tell me about yourself and your professional journey.",
+    "answer": "I am a software engineer focused on backend and distributed systems. I grew from internships to owning services in production, and I care about reliability, clean design, and mentoring.",
+    "score": 74,
+    "category": "cv_hr"
+  },
+  {
+    "question": "Tell me about yourself and your professional journey.",
+    "answer": "I am a software engineer focused on backend and distributed systems. I grew from internships to owning services in production, and I care about reliability, clean design, and mentoring. I also documented decisions for the team.",
+    "score": 76,
+    "category": "cv_hr_aug"
+  },
+  {
+    "question": "How do you approach security in a web application?",
+    "answer": "Defense in depth: authn authz least privilege, validate inputs, use ORMs or prepared statements, set CSP HSTS X-Frame-Options, rotate secrets, audit logs, and SAST in CI.",
+    "score": 79,
+    "category": "cv_technical"
+  },
+  {
+    "question": "How do you approach security in a web application?",
+    "answer": "Defense in depth: authn authz least privilege, validate inputs, use ORMs or prepared statements, set CSP HSTS X-Frame-Options, rotate secrets, audit logs, and SAST in CI. I also documented decisions for the team.",
+    "score": 81,
+    "category": "cv_technical_aug"
+  },
+  {
+    "question": "Explain how you prevent SQL injection and XSS.",
+    "answer": "Parameterized queries and ORM for SQLi; contextual encoding for output, CSP, and avoiding innerHTML for user content for XSS.",
+    "score": 77,
+    "category": "cv_technical"
+  },
+  {
+    "question": "Explain how you prevent SQL injection and XSS.",
+    "answer": "Parameterized queries and ORM for SQLi; contextual encoding for output, CSP, and avoiding innerHTML for user content for XSS. I also documented decisions for the team.",
+    "score": 79,
+    "category": "cv_technical_aug"
+  },
+  {
+    "question": "Tell me about a time you identified a process inefficiency and fixed it.",
+    "answer": "Code review took days because reviewers were overloaded. I introduced a rotation, small PR guidelines, and auto-assign bot; median review time dropped from 48h to 8h.",
+    "score": 82,
+    "category": "cv_behavioral"
+  },
+  {
+    "question": "Tell me about a time you identified a process inefficiency and fixed it.",
+    "answer": "Code review took days because reviewers were overloaded. I introduced a rotation, small PR guidelines, and auto-assign bot; median review time dropped from 48h to 8h. I also documented decisions for the team.",
+    "score": 84,
+    "category": "cv_behavioral_aug"
+  },
+  {
+    "question": "What did a typical day look like for you as a Software Engineer?",
+    "answer": "Standups coding reviews and shipping small features mostly in typescript and node",
+    "score": 52,
+    "category": "cv_behavioral_weak"
+  },
+  {
+    "question": "How do you approach security in a web application?",
+    "answer": "I try to be careful and follow best practices.",
+    "score": 28,
+    "category": "weak"
+  },
+  {
+    "question": "What are your two or three greatest professional strengths? Give examples.",
+    "answer": "I am hard working and a team player.",
+    "score": 22,
+    "category": "weak"
+  }
+]
