@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { scoreAnswerLocal } from '../utils/scoreAnswerLocal';
 import { finalizeSessionBehavior } from '../utils/behavioralScoring';
 import {
@@ -186,9 +186,12 @@ function Disqualified({ log, onRetry }) {
 const MAX_V = 3;
 
 export default function VideoInterview() {
+  const location = useLocation();
+  const stateData = location.state || {};
+
   // ── Interview state ──────────────────────────────────────────────────────
   const [phase, setPhase]               = useState('lobby');
-  const [interviewType, setInterviewType] = useState('behavioral');
+  const [interviewType, setInterviewType] = useState(stateData.interview_type || 'mixed');
   const [questions, setQuestions]       = useState([]);
   const [qIndex, setQIndex]             = useState(0);
   const [transcript, setTranscript]     = useState('');
@@ -204,7 +207,7 @@ export default function VideoInterview() {
   const [timer, setTimer]               = useState(0);
 
   // ── CV + Role state ───────────────────────────────────────────────────────
-  const [jobRole, setJobRole]           = useState('');
+  const [jobRole, setJobRole]           = useState(stateData.job_title || '');
   const [cvFile, setCvFile]             = useState(null);
   const [cvData, setCvData]             = useState(null);
   const [cvLoading, setCvLoading]       = useState(false);
@@ -857,8 +860,10 @@ export default function VideoInterview() {
         },
         body: JSON.stringify({
           interview_type: interviewType,
-          difficulty: 'medium',
+          difficulty: stateData.difficulty || 'medium',
           job_title: jobRole || cvData?.cv?.job_titles?.[0] || 'General Interview',
+          application_id: stateData.jobId || null,
+          is_mock: !!stateData.is_mock
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -1211,7 +1216,8 @@ export default function VideoInterview() {
             <div className="absolute bottom-2 left-3 bg-black/50 rounded px-2 py-0.5 text-xs text-white">📷 Preview</div>
           </div>
           {/* CV Upload Section */}
-          <div className="bg-gray-900/60 border border-white/10 rounded-2xl p-4 mb-3">
+          {!stateData.jobId && (
+            <div className="bg-gray-900/60 border border-white/10 rounded-2xl p-4 mb-3">
             <div className="flex items-center gap-2 mb-1">
               <FileText className="w-4 h-4 text-sky-400"/>
               <span className="text-sm font-semibold text-white">Upload CV</span>
@@ -1270,9 +1276,10 @@ export default function VideoInterview() {
               </p>
             )}
           </div>
+          )}
 
           {/* Job Role Input — shown only if no CV */}
-          {!cvData && (
+          {!cvData && !stateData.jobId && (
             <div className="bg-gray-900/60 border border-white/10 rounded-2xl p-4 mb-3">
               <div className="flex items-center gap-2 mb-2">
                 <Briefcase className="w-4 h-4 text-sky-400"/>
@@ -1291,7 +1298,7 @@ export default function VideoInterview() {
           )}
 
           {/* Interview Type — shown only if no CV */}
-          {!cvData && (
+          {!cvData && !stateData.jobId && (
             <div className="bg-gray-900/60 border border-white/10 rounded-2xl p-4 mb-3">
               <div className="text-sm text-gray-400 mb-2">Question Focus</div>
               <div className="grid grid-cols-2 gap-2">
@@ -1302,6 +1309,18 @@ export default function VideoInterview() {
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {stateData.jobId && (
+            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-5 mb-4 text-center">
+              <h3 className="text-emerald-400 font-bold mb-1">Official Interview: {jobRole}</h3>
+              <p className="text-gray-400 text-sm">Your application details have been processed. The interview is tailored to the job requirements.</p>
+              {(cvError || dashboardSyncError) && (
+                <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs font-medium text-left">
+                  {cvError || dashboardSyncError}
+                </div>
+              )}
             </div>
           )}
 

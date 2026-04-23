@@ -2,13 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Sparkles, LogOut, Play, Clock, CheckCircle, TrendingUp,
-  User, ChevronRight, Award, Target, BarChart2, Plus
+  User, ChevronRight, Award, Target, BarChart2, Plus,
+  Briefcase, FileText, LayoutDashboard, Search, Activity, Building2
 } from 'lucide-react';
+
+const API = 'http://localhost:8000';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [interviews, setInterviews] = useState([]);
+  const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const token = localStorage.getItem('token');
@@ -16,37 +20,34 @@ const Dashboard = () => {
   useEffect(() => {
     if (!token) { navigate('/signin'); return; }
     fetchData();
-    const onFocus = () => fetchData();
-    const refreshTimer = setInterval(fetchData, 15000);
-    window.addEventListener('focus', onFocus);
-    return () => {
-      clearInterval(refreshTimer);
-      window.removeEventListener('focus', onFocus);
-    };
   }, [token]);
 
   const fetchData = async () => {
     try {
-      const meRes = await fetch('http://localhost:8000/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const headers = { Authorization: `Bearer ${token}` };
+      
+      const meRes = await fetch(`${API}/api/auth/me`, { headers });
       if (meRes.status === 401) { navigate('/signin'); return; }
       const meData = await meRes.json();
       setUser(meData);
 
-      if (meData.role === 'recruiter') {
-        navigate('/recruiter');
-        return;
-      }
+      if (meData.role === 'recruiter') { navigate('/recruiter'); return; }
+      if (meData.role === 'admin') { navigate('/admin'); return; }
 
-      const intRes = await fetch('http://localhost:8000/api/candidate/interviews', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // Parallel fetch
+      const [intRes, appRes] = await Promise.all([
+        fetch(`${API}/api/candidate/interviews`, { headers }),
+        fetch(`${API}/api/candidate/applications`, { headers })
+      ]);
+
       const intData = await intRes.json();
+      const appData = await appRes.json();
+
       setInterviews(Array.isArray(intData) ? intData : []);
+      setApplications(Array.isArray(appData) ? appData : []);
+      
     } catch (err) {
-      console.error('Failed to fetch data:', err);
-      // If backend is down, show empty state rather than broken UI
+      console.error('Sync failed:', err);
     } finally {
       setLoading(false);
     }
@@ -57,207 +58,148 @@ const Dashboard = () => {
     navigate('/signin');
   };
 
-  const normalizeStatus = (status) => {
-    if (!status) return 'pending';
-    if (typeof status === 'string') return status;
-    if (typeof status === 'object' && status.value) return status.value;
-    return String(status);
-  };
+  const completed = interviews.filter(i => i.status === 'completed');
+  const avgScore = completed.length
+    ? Math.round(completed.reduce((sum, i) => sum + (i.overall_score || 0), 0) / completed.length)
+    : 0;
 
-  const formatDate = (value) => {
-    if (!value) return '—';
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return '—';
-    return d.toLocaleString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const interviewsWithStatus = interviews.map((i) => ({
-    ...i,
-    status: normalizeStatus(i.status),
-  }));
-
-  const completed = interviewsWithStatus.filter(i => i.status === 'completed');
-  const inProgress = interviewsWithStatus.filter(i => i.status === 'in_progress');
-  const completedWithScores = completed.filter(i => i.overall_score != null);
-  const avgScore = completedWithScores.length
-    ? Math.round(completedWithScores.reduce((sum, i) => sum + i.overall_score, 0) / completedWithScores.length)
-    : null;
-
-  const stats = [
-    { label: 'Total Interviews', value: interviewsWithStatus.length, icon: BarChart2, color: 'from-sky-600 to-sky-800' },
-    { label: 'Completed', value: completed.length, icon: CheckCircle, color: 'from-emerald-600 to-emerald-800' },
-    { label: 'In Progress', value: inProgress.length, icon: Clock, color: 'from-slate-600 to-slate-800' },
-    { label: 'Avg Score', value: avgScore != null ? `${avgScore}%` : 'N/A', icon: TrendingUp, color: 'from-teal-600 to-teal-800' },
-  ];
-
-  const statusColors = {
-    completed: 'text-green-400 bg-green-400/10',
-    in_progress: 'text-blue-400 bg-blue-400/10',
-    pending: 'text-yellow-400 bg-yellow-400/10',
-    abandoned: 'text-red-400 bg-red-400/10',
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="w-10 h-10 border-2 border-sky-500/40 border-t-sky-400 rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+      <div className="w-10 h-10 border-2 border-sky-500/40 border-t-sky-400 rounded-full animate-spin" />
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(14,165,233,0.1),transparent)]" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-slate-800/15 rounded-full blur-3xl" />
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(14,165,233,0.08),transparent)]" />
       </div>
 
-      <nav className="relative border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md sticky top-0 z-10">
+      <nav className="relative border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-zinc-900 ring-1 ring-zinc-700 flex items-center justify-center group-hover:ring-sky-500/40 transition-shadow">
+          <Link to="/" className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-zinc-900 ring-1 ring-zinc-700/80 flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-sky-400" />
             </div>
             <span className="text-lg font-semibold text-white">InterviewIQ</span>
           </Link>
-          <div className="flex items-center gap-4">
-            {user?.role === 'admin' && (
-              <Link
-                to="/recruiter"
-                className="text-sm text-zinc-400 hover:text-sky-300 transition-colors"
-              >
-                Recruiter view
-              </Link>
-            )}
-            <div className="flex items-center gap-2 text-sm text-gray-400">
-              <User className="w-4 h-4" />
-              <span>{user?.full_name || 'User'}</span>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 text-sm text-gray-400 hover:text-red-400 transition-colors px-3 py-2 rounded-lg hover:bg-red-400/10"
-            >
-              <LogOut className="w-4 h-4" />
-              Logout
-            </button>
+          <div className="flex items-center gap-6">
+            <Link to="/jobs" className="text-sm text-zinc-400 hover:text-white transition-colors">Find Jobs</Link>
+            <Link to="/profile" className="flex items-center gap-2 group">
+               <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center group-hover:border-sky-500/50 transition-colors">
+                  <User className="w-4 h-4 text-zinc-400 group-hover:text-sky-400" />
+               </div>
+               <span className="text-sm text-zinc-300 hidden sm:inline">{user?.full_name?.split(' ')[0]}</span>
+            </Link>
+            <button onClick={handleLogout} className="text-zinc-500 hover:text-red-400 transition-colors"><LogOut className="w-4 h-4" /></button>
           </div>
         </div>
       </nav>
 
       <div className="relative max-w-7xl mx-auto px-6 py-10">
-        <div className="mb-10">
-          <h1 className="text-4xl font-bold text-white">
-            Welcome back, <span className="text-gradient">{user?.full_name?.split(' ')[0] || user?.name?.split(' ')[0] || user?.username || 'there'}!</span>
-          </h1>
-          <p className="text-gray-400 mt-2 text-lg">Ready to practice? Your next interview awaits.</p>
-        </div>
+        <header className="mb-12">
+          <h1 className="text-4xl font-bold text-white tracking-tight">Welcome, <span className="text-sky-400">{user?.full_name?.split(' ')[0]}!</span></h1>
+          <p className="text-zinc-400 mt-2 text-lg">Your candidate hub for AI interviews and job applications.</p>
+        </header>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-          {stats.map((stat, i) => (
-            <div key={i} className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-5 backdrop-blur-sm">
-              <div className={`w-10 h-10 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center mb-3`}>
-                <stat.icon className="w-5 h-5 text-white" />
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          {[
+            { label: 'Applications', val: applications.length, icon: Briefcase, color: 'text-sky-400', bg: 'bg-sky-500/10' },
+            { label: 'Mock Sessions', val: interviews.length, icon: Play, color: 'text-purple-400', bg: 'bg-purple-500/10' },
+            { label: 'Completed', val: completed.length, icon: CheckCircle, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+            { label: 'Avg AI Score', val: `${avgScore}%`, icon: TrendingUp, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+          ].map((s, i) => (
+            <div key={i} className="bg-zinc-900/60 border border-zinc-800 p-6 rounded-2xl">
+              <div className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center mb-4`}>
+                 <s.icon className={`w-5 h-5 ${s.color}`} />
               </div>
-              <div className="text-3xl font-bold text-white">{stat.value}</div>
-              <div className="text-gray-400 text-sm mt-1">{stat.label}</div>
+              <div className="text-3xl font-bold text-white tabular-nums">{s.val}</div>
+              <div className="text-xs text-zinc-500 uppercase tracking-widest font-bold mt-1">{s.label}</div>
             </div>
           ))}
         </div>
 
-        <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-8 mb-10 backdrop-blur-sm ring-1 ring-sky-500/10">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Target className="w-5 h-5 text-sky-400" />
-                <span className="text-sky-400/90 font-medium text-sm">Start practicing</span>
-              </div>
-              <h2 className="text-2xl font-bold text-white mb-1">Begin a new interview</h2>
-              <p className="text-zinc-400">Choose your difficulty, job title, and type then start answering.</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Main Content Area */}
+          <div className="lg:col-span-2 space-y-8">
+            
+            {/* Action Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <Link to="/jobs" className="bg-sky-600 hover:bg-sky-500 p-6 rounded-2xl flex flex-col justify-between h-48 transition-all group shadow-lg shadow-sky-950/20">
+                  <Search className="w-8 h-8 text-white/50 group-hover:text-white transition-colors" />
+                  <div>
+                    <h3 className="text-xl font-bold text-white">Find a Job</h3>
+                    <p className="text-sky-100 text-sm mt-1">Browse active listings and apply with your AI profile.</p>
+                  </div>
+               </Link>
+               <Link to="/interview/new" className="bg-zinc-900 border border-zinc-800 hover:border-zinc-600 p-6 rounded-2xl flex flex-col justify-between h-48 transition-all group">
+                  <Play className="w-8 h-8 text-sky-400/50 group-hover:text-sky-400 transition-colors" />
+                  <div>
+                    <h3 className="text-xl font-bold text-white">Practice Interview</h3>
+                    <p className="text-zinc-500 text-sm mt-1">Take a mock interview to improve your AI score.</p>
+                  </div>
+               </Link>
             </div>
-            <Link
-              to="/interview/new"
-              className="flex-shrink-0 flex items-center gap-3 px-8 py-4 bg-sky-600 hover:bg-sky-500 rounded-xl font-semibold text-lg transition-colors shadow-lg shadow-sky-950/30 whitespace-nowrap text-white"
-            >
-              <Plus className="w-5 h-5" />
-              New Interview
-            </Link>
-          </div>
-        </div>
 
-        <div>
-          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Award className="w-5 h-5 text-sky-400" />
-            Interview History
-          </h2>
-          {interviewsWithStatus.length === 0 ? (
-            <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-12 text-center backdrop-blur-sm">
-              <Play className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg">No interviews yet.</p>
-              <p className="text-gray-600 text-sm mt-1">Click "New Interview" above to get started!</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {interviewsWithStatus.map((interview) => (
-                <div key={interview.id} className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-5 backdrop-blur-sm flex items-center justify-between hover:border-zinc-600 transition-all group">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-sky-500/15 border border-sky-500/20 rounded-lg flex items-center justify-center">
-                      <Play className="w-5 h-5 text-sky-400" />
-                    </div>
-                    <div>
-                      <div className="text-white font-medium">{interview.job_title || 'General Interview'}</div>
-                      <div className="text-gray-500 text-sm capitalize">{interview.interview_type} · {interview.difficulty}</div>
-                      <div className="text-gray-500 text-xs mt-1">
-                        Created: {formatDate(interview.created_at)}
-                        {interview.completed_at ? ` · Completed: ${formatDate(interview.completed_at)}` : ''}
+            {/* My Applications Section */}
+            <section>
+               <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-white flex items-center gap-2"><Briefcase className="w-5 h-5 text-sky-400" /> Recent Applications</h2>
+                  <Link to="/applications" className="text-xs font-bold text-sky-400 hover:underline uppercase tracking-widest">View all</Link>
+               </div>
+               {applications.length === 0 ? (
+                 <div className="bg-zinc-900/40 border border-zinc-800 border-dashed rounded-3xl py-12 text-center">
+                    <p className="text-zinc-600 text-sm">You haven't applied to any jobs yet.</p>
+                 </div>
+               ) : (
+                 <div className="space-y-3">
+                    {applications.slice(0, 3).map(app => (
+                      <div key={app.id} className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between">
+                         <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-zinc-800 rounded-xl flex items-center justify-center border border-zinc-700"><Building2 className="w-5 h-5 text-zinc-500" /></div>
+                            <div>
+                               <h4 className="font-bold text-white text-sm">{app.job_title}</h4>
+                               <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mt-0.5">{app.status.replace('_', ' ')}</p>
+                            </div>
+                         </div>
+                         <div className="text-right">
+                            <div className="text-sm font-bold text-sky-400">{app.cv_match_score?.toFixed(0)}%</div>
+                            <div className="text-[9px] text-zinc-500 uppercase font-bold">Match</div>
+                         </div>
                       </div>
-                    </div>
+                    ))}
+                 </div>
+               )}
+            </section>
+          </div>
+
+          {/* Sidebar Area */}
+          <div className="space-y-8">
+            <section>
+               <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2"><Activity className="w-5 h-5 text-purple-400" /> Activity</h2>
+               <div className="bg-zinc-900/60 border border-zinc-800 rounded-3xl p-6">
+                  <div className="space-y-6">
+                    {interviews.length === 0 ? (
+                       <p className="text-zinc-600 text-center text-sm py-4">No recent activity.</p>
+                    ) : (
+                       interviews.slice(0, 5).map(int => (
+                         <div key={int.id} className="flex gap-4 relative">
+                            <div className="shrink-0 w-2 h-2 rounded-full bg-sky-500 mt-1.5" />
+                            <div className="pb-6 border-l border-zinc-800 pl-6 -ml-5 last:border-0 last:pb-0">
+                               <p className="text-sm text-white font-medium">{int.status === 'completed' ? 'Finished session' : 'Started session'}</p>
+                               <p className="text-[10px] text-zinc-500 uppercase font-bold mt-1">{int.job_title || 'Mock Practice'}</p>
+                               <p className="text-[9px] text-zinc-600 mt-2">{new Date(int.created_at).toLocaleDateString()}</p>
+                            </div>
+                         </div>
+                       ))
+                    )}
                   </div>
-                  <div className="flex items-center gap-4">
-                    {interview.overall_score != null && (
-                      <div className="text-right">
-                        <div className="text-white font-bold">{Math.round(interview.overall_score)}%</div>
-                        <div className="text-gray-500 text-xs">Score</div>
-                      </div>
-                    )}
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${statusColors[interview.status] || 'text-gray-400 bg-gray-400/10'}`}>
-                      {interview.status === 'pending' ? 'not started' : interview.status.replace('_', ' ')}
-                    </span>
-                    {interview.status === 'in_progress' && (
-                      <Link
-                        to="/interview/video"
-                        className="text-xs px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 transition-colors"
-                      >
-                        Resume
-                      </Link>
-                    )}
-                    {interview.status === 'completed' && (
-                      <Link
-                        to="/interview/video"
-                        className="text-xs px-3 py-1 rounded-full bg-green-500/20 text-green-300 hover:bg-green-500/30 transition-colors"
-                      >
-                        Start New
-                      </Link>
-                    )}
-                    {interview.status === 'pending' && (
-                      <Link
-                        to="/interview/video"
-                        className="text-xs px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30 transition-colors"
-                      >
-                        Start
-                      </Link>
-                    )}
-                    <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-sky-400 transition-colors" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+               </div>
+            </section>
+          </div>
+
         </div>
       </div>
     </div>

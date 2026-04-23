@@ -10,6 +10,15 @@ import VideoInterview from './pages/VideoInterview';
 import RecruiterDashboard from './pages/RecruiterDashboard';
 import RecruiterCandidateProfile from './pages/RecruiterCandidateProfile';
 
+// New Pages (Phase 4)
+import CandidateProfile from './pages/CandidateProfile';
+import JobListings from './pages/JobListings';
+import ApplicationStatus from './pages/ApplicationStatus';
+import PostJob from './pages/PostJob';
+import RecruiterApplicationReview from './pages/RecruiterApplicationReview';
+import RecruiterJobManagement from './pages/RecruiterJobManagement';
+import AdminPanel from './pages/AdminPanel';
+
 function App() {
   return (
     <Router>
@@ -17,12 +26,25 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
-        <Route path="/recruiter/candidates/:candidateId" element={<RecruiterCandidateProfile />} />
-        <Route path="/recruiter" element={<RecruiterDashboard />} />
+        
+        {/* Candidate Routes */}
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<CandidateProfile />} />
+        <Route path="/jobs" element={<JobListings />} />
+        <Route path="/applications" element={<ApplicationStatus />} />
         <Route path="/interview/new" element={<NewInterview />} />
         <Route path="/interview/video" element={<VideoInterview />} />
         <Route path="/interview/:id" element={<InterviewSession />} />
+
+        {/* Recruiter Routes */}
+        <Route path="/recruiter" element={<RecruiterDashboard />} />
+        <Route path="/recruiter/candidates/:candidateId" element={<RecruiterCandidateProfile />} />
+        <Route path="/recruiter/post-job" element={<PostJob />} />
+        <Route path="/recruiter/jobs/:jobId" element={<RecruiterJobManagement />} />
+        <Route path="/recruiter/applications/:applicationId" element={<RecruiterApplicationReview />} />
+
+        {/* Admin Routes */}
+        <Route path="/admin" element={<AdminPanel />} />
       </Routes>
     </Router>
   );

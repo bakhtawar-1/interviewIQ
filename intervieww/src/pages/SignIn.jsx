@@ -29,7 +29,15 @@ const SignIn = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.detail || 'Login failed. Please check your credentials.');
+        let msg = data.detail;
+        if (typeof msg === 'object' && msg !== null) {
+          if (Array.isArray(msg)) {
+            msg = msg.map(err => `${err.loc[err.loc.length - 1]}: ${err.msg}`).join(', ');
+          } else {
+            msg = JSON.stringify(msg);
+          }
+        }
+        setError(msg || 'Login failed.');
         return;
       }
 
@@ -42,6 +50,10 @@ const SignIn = () => {
         const me = await meRes.json();
         if (me.role === 'recruiter') {
           navigate('/recruiter');
+          return;
+        }
+        if (me.role === 'admin') {
+          navigate('/admin');
           return;
         }
       }
