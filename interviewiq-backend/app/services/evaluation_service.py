@@ -48,7 +48,11 @@ def _smart_keyword_score(response_text: str, ideal_answer: str, keywords: Option
 
     # Check explicit keywords
     if keywords:
-        kws = [k.strip().lower() for k in keywords.split(",") if k.strip()]
+        if isinstance(keywords, list):
+            kws = [k.strip().lower() for k in keywords if k.strip()]
+        else:
+            kws = [k.strip().lower() for k in keywords.split(",") if k.strip()]
+            
         if kws:
             matched = sum(1 for kw in kws if kw in response_lower)
             score += (matched / len(kws)) * 15  # up to 15 points
@@ -65,10 +69,15 @@ def _length_score(response_text: str) -> float:
 
 def _keyword_bonus(response_text: str, keywords: Optional[str]) -> float:
     if not keywords:
-        return 15.0
-    kws = [k.strip().lower() for k in keywords.split(",") if k.strip()]
+        return 0.0
+    
+    if isinstance(keywords, list):
+        kws = [k.strip().lower() for k in keywords if k.strip()]
+    else:
+        kws = [k.strip().lower() for k in keywords.split(",") if k.strip()]
+        
     if not kws:
-        return 15.0
+        return 0.0
     matched = sum(1 for kw in kws if kw in response_text.lower())
     return round((matched / len(kws)) * 30, 2)
 
@@ -93,7 +102,10 @@ def _generate_feedback(semantic_pct, response_text, keywords):
         parts.append("Quite long — try to be more concise and focused.")
 
     if keywords:
-        kws = [k.strip().lower() for k in keywords.split(",") if k.strip()]
+        if isinstance(keywords, list):
+            kws = [k.strip().lower() for k in keywords if k.strip()]
+        else:
+            kws = [k.strip().lower() for k in keywords.split(",") if k.strip()]
         missed = [kw for kw in kws if kw not in response_text.lower()]
         if missed[:3]:
             parts.append(f"Consider mentioning: {', '.join(missed[:3])}.")
@@ -108,23 +120,37 @@ def score_response(response_text: str, ideal_answer: str, keywords: Optional[str
     if not response_text or not response_text.strip():
         return 0.0, "No response was provided."
 
+    response_lower = response_text.strip().lower()
+    garbage_phrases = ["i don't know", "i dont know", "no idea", "skip", "no i don't", "i don't", "no tell me", "no"]
+    if response_lower in garbage_phrases or len(response_lower.split()) < 4:
+        return 0.0, "Answer is too short or indicates skipping. Please provide a detailed response."
+
     model = _get_model()
 
-    # AI Semantic Score (50 pts)
+    # AI Semantic Score (50 pts, or 80 if no keywords)
+    if isinstance(keywords, list):
+        has_keywords = bool(keywords and any(k.strip() for k in keywords))
+    else:
+        has_keywords = bool(keywords and [k.strip() for k in keywords.split(",") if k.strip()])
+    max_semantic = 50.0 if has_keywords else 80.0
+
     semantic_score = 0.0
     if model != "fallback" and ideal_answer and ideal_answer.strip():
         try:
             embeddings = model.encode([response_text, ideal_answer])
             similarity = _cosine_similarity(embeddings[0], embeddings[1])
-            semantic_score = round(similarity * 50, 2)
+            similarity_clamped = max(0.0, similarity)
+            semantic_score = round(similarity_clamped * max_semantic, 2)
         except Exception as e:
             print(f"AI error: {e}, using smart scoring")
-            semantic_score = _smart_keyword_score(response_text, ideal_answer, keywords)
+            base_score = _smart_keyword_score(response_text, ideal_answer, keywords)
+            semantic_score = round((base_score / 50.0) * max_semantic, 2)
     else:
         # Smart fallback — never returns 0 for a real answer
-        semantic_score = _smart_keyword_score(response_text, ideal_answer or "", keywords)
+        base_score = _smart_keyword_score(response_text, ideal_answer or "", keywords)
+        semantic_score = round((base_score / 50.0) * max_semantic, 2)
 
-    # Keyword bonus (30 pts)
+    # Keyword bonus (30 pts if keywords present, else 0)
     kw_score = _keyword_bonus(response_text, keywords)
 
     # Length score (20 pts)
@@ -138,7 +164,7 @@ def score_response(response_text: str, ideal_answer: str, keywords: Optional[str
         total = 10.0
 
     feedback = _generate_feedback(
-        semantic_pct=semantic_score * 2,
+        semantic_pct=(semantic_score / max_semantic) * 100 if max_semantic > 0 else 0,
         response_text=response_text,
         keywords=keywords
     )

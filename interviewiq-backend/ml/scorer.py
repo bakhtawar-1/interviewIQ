@@ -212,7 +212,7 @@ def _generate_feedback(features: dict, score: int, question: str = '') -> str:
 
 
 # ── Main scoring function ─────────────────────────────────────────────────────
-def score_answer(question: str, answer: str) -> dict:
+def score_answer(question: str, answer: str, keywords: Optional[List[str]] = None) -> dict:
     """
     Returns:
         score (int): 0-100
@@ -240,6 +240,22 @@ def score_answer(question: str, answer: str) -> dict:
     # ── Rule-based adjustments ────────────────────────────────────────────────
     f = _extract_features(answer)
 
+    # ── Keyword Bonus ────────────────────────────────────────────────────────
+    kw_bonus = 0
+    matched_kws = []
+    missing_kws = []
+    if keywords:
+        # Deduplicate and normalize
+        unique_kws = list(set([k.lower().strip() for k in keywords if k.strip()]))
+        for kw in unique_kws:
+            if kw in answer.lower():
+                matched_kws.append(kw)
+            else:
+                missing_kws.append(kw)
+        
+        # 5 points per keyword, max 25 bonus
+        kw_bonus = min(len(matched_kws) * 5, 25)
+
     # Blend: training data is small — weight rules higher so good structured answers score fairly
     rule_score = (
         48
@@ -247,6 +263,7 @@ def score_answer(question: str, answer: str) -> dict:
         + f['length_bonus']
         + f['specificity_bonus']
         + f.get('technical_bonus', 0)
+        + kw_bonus
         - f['filler_penalty']
         - f['vague_penalty']
     )
@@ -268,6 +285,11 @@ def score_answer(question: str, answer: str) -> dict:
         final_score = min(75, max(final_score, 52))
 
     feedback = _generate_feedback(f, final_score, question)
+    
+    # Append keyword feedback if missing important ones
+    if missing_kws and final_score < 85:
+        kw_msg = f" Consider mentioning: {', '.join(missing_kws[:2])}."
+        feedback += kw_msg
 
     return {
         'score': final_score,
@@ -278,10 +300,13 @@ def score_answer(question: str, answer: str) -> dict:
             'length_bonus':      f['length_bonus'],
             'specificity_bonus': f['specificity_bonus'],
             'technical_bonus':   f.get('technical_bonus', 0),
+            'keyword_bonus':     kw_bonus,
             'filler_penalty':    -f['filler_penalty'],
             'vague_penalty':     -f['vague_penalty'],
             'star_components':   f['star'],
             'word_count':        f['word_count'],
             'sec_breadth':       f.get('sec_breadth', 0),
+            'matched_keywords':  matched_kws,
+            'missing_keywords':  missing_kws,
         }
     }

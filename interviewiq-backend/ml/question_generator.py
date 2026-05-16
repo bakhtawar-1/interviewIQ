@@ -346,11 +346,29 @@ def generate_questions_from_role(role: str, category: str = 'mixed', count: int 
         hr = list(HR_QUESTIONS)
         random.shuffle(hr)
 
+        b_count = max(1, int(count * 0.4))
+        t_count = max(1, int(count * 0.4))
+        h_count = count - b_count - t_count
+        if h_count < 0: h_count = 0
+
         questions = (
-            behavioral[:2] +
-            tech[:2] +
-            hr[:1]
+            behavioral[:b_count] +
+            tech[:t_count] +
+            hr[:h_count]
         )
+        
+        # Pad with general if we didn't have enough in the specific pools
+        if len(questions) < count:
+            general = list(TECHNICAL_QUESTIONS.get('general', [])) + list(BEHAVIORAL_QUESTIONS)
+            random.shuffle(general)
+            seen_texts = {q['text'] for q in questions}
+            for g_q in general:
+                if g_q['text'] not in seen_texts:
+                    questions.append(g_q)
+                    seen_texts.add(g_q['text'])
+                if len(questions) == count:
+                    break
+
         random.shuffle(questions)
 
     return [

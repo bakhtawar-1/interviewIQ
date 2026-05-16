@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   Sparkles, ArrowLeft, User, Mail, Briefcase, Target,
   CheckCircle, XCircle, MessageSquare, Save, AlertCircle, Clock,
-  FileText, TrendingUp, Shield, BarChart3
+  FileText, TrendingUp, Shield, BarChart3, Download
 } from 'lucide-react';
 
 const API = 'http://localhost:8000';
@@ -86,6 +86,45 @@ const RecruiterApplicationReview = () => {
     }
   };
 
+  const handleDownloadReport = () => {
+    if (!application || !report) return;
+
+    let content = `INTERVIEW IQ - CANDIDATE REPORT\n`;
+    content += `===============================\n\n`;
+    content += `Candidate: ${application.candidate_name} (${application.candidate_email})\n`;
+    content += `Role: ${application.job_title}\n`;
+    content += `CV Match Score: ${application.cv_match_score?.toFixed(1)}%\n\n`;
+    
+    content += `AI INTERVIEW SUMMARY\n`;
+    content += `---------------------\n`;
+    content += `Technical Score: ${report.summary?.technical_score || 0}%\n`;
+    content += `Communication Score: ${report.summary?.communication_score || 0}%\n`;
+    content += `Confidence Score: ${report.summary?.confidence_score || 0}%\n\n`;
+    
+    content += `Strengths:\n${report.summary?.strengths || 'N/A'}\n\n`;
+    content += `Weaknesses:\n${report.summary?.weaknesses || 'N/A'}\n\n`;
+    
+    content += `INTERVIEW RESPONSES\n`;
+    content += `-------------------\n`;
+    
+    report.questions_and_answers?.forEach((qa, i) => {
+      content += `\nQ${i+1}: ${qa.question}\n`;
+      content += `Score: ${qa.score}%\n`;
+      content += `Answer: "${qa.answer}"\n`;
+      content += `Feedback: ${qa.feedback}\n`;
+    });
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${application.candidate_name.replace(/\\s+/g, '_')}_Interview_Report.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
       <div className="w-10 h-10 border-2 border-sky-500/40 border-t-sky-400 rounded-full animate-spin" />
@@ -109,7 +148,7 @@ const RecruiterApplicationReview = () => {
 
       <nav className="relative border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md sticky top-0 z-20">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/recruiter" className="flex items-center gap-2 text-zinc-400 hover:text-zinc-100 transition-colors text-sm">
+          <Link to={application ? `/recruiter/jobs/${application.job_id}/applications` : "/recruiter"} className="flex items-center gap-2 text-zinc-400 hover:text-zinc-100 transition-colors text-sm">
             <ArrowLeft className="w-4 h-4" /> Back to Applications
           </Link>
           <div className="flex items-center gap-2">
@@ -144,6 +183,18 @@ const RecruiterApplicationReview = () => {
               </div>
             </div>
           </header>
+          {application.interview_status === 'disqualified' && (
+            <div className="bg-red-500/10 border-2 border-red-500/30 rounded-2xl p-6 flex items-start gap-4">
+              <Shield className="w-8 h-8 text-red-400 shrink-0" />
+              <div>
+                <h3 className="text-red-400 font-bold text-lg">Candidate Disqualified</h3>
+                <p className="text-red-300/80 text-sm mt-1">
+                  The AI proctoring system terminated this interview due to multiple violations (tab switching, eyes off screen, or face not visible). 
+                  This candidate has been automatically moved to the rejected list.
+                </p>
+              </div>
+            </div>
+          )}
 
           {cvBreakdown && (
             <section className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6">
@@ -189,9 +240,17 @@ const RecruiterApplicationReview = () => {
           {report ? (
             <section className="space-y-6">
               <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6">
-                <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-purple-400" /> AI Interview Summary
-                </h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-purple-400" /> AI Interview Summary
+                  </h2>
+                  <button 
+                    onClick={handleDownloadReport}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 rounded-lg text-xs font-bold transition-all shadow-sm"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Download Report
+                  </button>
+                </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                   <div className="bg-zinc-800/40 p-4 rounded-xl text-center border border-zinc-700/50">
@@ -218,6 +277,28 @@ const RecruiterApplicationReview = () => {
                     <p className="text-zinc-300 text-sm">{report.summary?.weaknesses || 'N/A'}</p>
                   </div>
                 </div>
+
+                {report.summary?.report_json && (() => {
+                  try {
+                    const data = JSON.parse(report.summary.report_json);
+                    const violations = data.proctoring_violations || [];
+                    if (violations.length === 0) return null;
+                    return (
+                      <div className="mt-6 pt-6 border-t border-zinc-800">
+                        <h4 className="text-xs font-bold text-red-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                          <Shield className="w-3.5 h-3.5" /> Proctoring Violation Log
+                        </h4>
+                        <div className="space-y-1.5">
+                          {violations.map((v, idx) => (
+                            <div key={idx} className="text-xs text-zinc-400 flex gap-2">
+                              <span className="text-red-500/60 font-bold">#{idx + 1}</span> {v}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  } catch { return null; }
+                })()}
               </div>
 
               {/* Q&A List */}

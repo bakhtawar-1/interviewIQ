@@ -124,22 +124,31 @@ const PostJob = () => {
           {/* Step 2: Custom Questions */}
           {step === 2 && <>
             <p className="text-zinc-400 text-sm">Add your own questions to be mixed with AI-generated ones. (Optional)</p>
-            <div className="space-y-3">
-              <textarea className={`${inp} resize-none`} rows={2} value={newQ.question_text} onChange={e => setNewQ(q => ({ ...q, question_text: e.target.value }))} placeholder="Enter your custom question..." />
-              <div className="flex gap-3">
-                <select className={`${inp} flex-1`} value={newQ.difficulty} onChange={e => setNewQ(q => ({ ...q, difficulty: e.target.value }))}>
-                  <option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option>
-                </select>
-                <input className={`${inp} flex-1`} value={newQ.expected_keywords} onChange={e => setNewQ(q => ({ ...q, expected_keywords: e.target.value }))} placeholder="Keywords: leadership,teamwork" />
-                <button onClick={addQuestion} className="px-4 py-2 bg-sky-600 hover:bg-sky-500 rounded-xl text-sm font-semibold text-white flex items-center gap-1 transition-colors shrink-0"><Plus className="w-4 h-4" /></button>
-              </div>
+            <div className="flex gap-3">
+              <textarea 
+                className={`${inp} resize-none`} 
+                rows={2} 
+                value={newQ.question_text} 
+                onChange={e => setNewQ({ ...newQ, question_text: e.target.value })} 
+                placeholder="Enter your custom question..." 
+              />
+              <button 
+                onClick={addQuestion} 
+                className="px-6 bg-sky-600 hover:bg-sky-500 rounded-xl text-sm font-semibold text-white flex items-center justify-center transition-colors shrink-0"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
             </div>
             {customQuestions.length > 0 && (
               <div className="space-y-2 mt-2">
                 {customQuestions.map((q, i) => (
                   <div key={i} className="flex items-start gap-3 bg-zinc-800/50 border border-zinc-700 rounded-xl p-3">
-                    <div className="flex-1"><p className="text-white text-sm">{q.question_text}</p><p className="text-zinc-500 text-xs mt-1">Difficulty: {q.difficulty} {q.expected_keywords && `· Keywords: ${q.expected_keywords}`}</p></div>
-                    <button onClick={() => removeQuestion(i)} className="text-red-400 hover:text-red-300 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                    <div className="flex-1">
+                      <p className="text-white text-sm">{q.question_text}</p>
+                    </div>
+                    <button onClick={() => removeQuestion(i)} className="text-red-400 hover:text-red-300 transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 ))}
               </div>

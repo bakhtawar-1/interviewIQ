@@ -172,7 +172,7 @@ const RecruiterJobManagement = () => {
               <p className="text-sky-100 opacity-80">You have {job.application_count} candidates waiting for review.</p>
            </div>
            <button 
-             onClick={() => navigate(`/recruiter?tab=applications&job_id=${job.id}`)}
+             onClick={() => navigate(`/recruiter/jobs/${job.id}/applications`)}
              className="px-8 py-4 bg-white text-sky-600 rounded-2xl font-bold text-lg hover:bg-sky-50 transition-all flex items-center gap-2"
            >
              Go to Applications <ChevronRight className="w-5 h-5" />

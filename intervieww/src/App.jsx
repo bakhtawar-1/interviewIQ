@@ -17,6 +17,7 @@ import ApplicationStatus from './pages/ApplicationStatus';
 import PostJob from './pages/PostJob';
 import RecruiterApplicationReview from './pages/RecruiterApplicationReview';
 import RecruiterJobManagement from './pages/RecruiterJobManagement';
+import RecruiterJobApplications from './pages/RecruiterJobApplications';
 import AdminPanel from './pages/AdminPanel';
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
         <Route path="/recruiter/candidates/:candidateId" element={<RecruiterCandidateProfile />} />
         <Route path="/recruiter/post-job" element={<PostJob />} />
         <Route path="/recruiter/jobs/:jobId" element={<RecruiterJobManagement />} />
+        <Route path="/recruiter/jobs/:jobId/applications" element={<RecruiterJobApplications />} />
         <Route path="/recruiter/applications/:applicationId" element={<RecruiterApplicationReview />} />
 
         {/* Admin Routes */}

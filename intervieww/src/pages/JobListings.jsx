@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Sparkles, Search, Filter, Briefcase, Clock, Target,
-  ChevronRight, ArrowRight, MapPin, GraduationCap, LogOut
+  ChevronRight, ArrowRight, GraduationCap
 } from 'lucide-react';
 
 const API = 'http://localhost:8000';
@@ -10,7 +10,7 @@ const API = 'http://localhost:8000';
 const JobListings = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
-  const headers = { Authorization: `Bearer ${token}` };
+  const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
 
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,12 +23,17 @@ const JobListings = () => {
   const [user, setUser] = useState(null);
   const [uploading, setUploading] = useState(false);
 
-  useEffect(() => {
-    if (!token) { navigate('/signin'); return; }
-    fetchJobs();
-  }, []);
+  const fetchPreview = useCallback(async (jobId) => {
+    try {
+      const res = await fetch(`${API}/api/jobs/${jobId}/cv-preview`, { headers });
+      if (res.ok) {
+        const d = await res.json();
+        setPreviewScores(prev => ({ ...prev, [jobId]: d }));
+      }
+    } catch {}
+  }, [headers]);
 
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     try {
       const meRes = await fetch(`${API}/api/auth/me`, { headers });
       if (meRes.ok) setUser(await meRes.json());
@@ -38,25 +43,21 @@ const JobListings = () => {
       if (skillFilter) params.append('skill', skillFilter);
       const res = await fetch(`${API}/api/jobs?${params}`, { headers });
       const data = await res.json();
-      setJobs(Array.isArray(data) ? data : []);
+      const jobList = Array.isArray(data) ? data : [];
+      setJobs(jobList);
       // Auto-preview CV match scores
-      data.forEach(job => fetchPreview(job.id));
+      jobList.forEach(job => fetchPreview(job.id));
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, skillFilter, headers, fetchPreview]);
 
-  const fetchPreview = async (jobId) => {
-    try {
-      const res = await fetch(`${API}/api/jobs/${jobId}/cv-preview`, { headers });
-      if (res.ok) {
-        const d = await res.json();
-        setPreviewScores(prev => ({ ...prev, [jobId]: d }));
-      }
-    } catch {}
-  };
+  useEffect(() => {
+    if (!token) { navigate('/signin'); return; }
+    fetchJobs();
+  }, [fetchJobs, navigate, token]);
 
   const handleCVUpload = async (e) => {
     const file = e.target.files[0];
@@ -85,8 +86,19 @@ const JobListings = () => {
       });
       const data = await res.json();
       if (!res.ok) {
-        setApplyResults(prev => ({ ...prev, [jobId]: { error: data.detail } }));
+        if (data.detail?.toLowerCase().includes('already applied')) {
+          // If we already applied, just sync the state and don't show it as a "failure"
+          setApplyResults(prev => ({ ...prev, [jobId]: null }));
+          fetchJobs();
+        } else {
+          setApplyResults(prev => ({ ...prev, [jobId]: { error: data.detail || 'Application failed.' } }));
+        }
       } else {
+        // Success: Update the local jobs state immediately so the UI reflects the new status
+        setJobs(prevJobs => prevJobs.map(j => 
+          j.id === jobId ? { ...j, application_status: data.status, match_score: data.cv_match_score } : j
+        ));
+        
         setApplyResults(prev => ({
           ...prev,
           [jobId]: {
@@ -96,8 +108,12 @@ const JobListings = () => {
           }
         }));
       }
-    } catch {
-      setApplyResults(prev => ({ ...prev, [jobId]: { error: 'Failed to apply.' } }));
+    } catch (err) {
+      console.error('Apply Error:', err);
+      setApplyResults(prev => ({ 
+        ...prev, 
+        [jobId]: { error: 'Network or Server error. If this happens twice, please refresh.' } 
+      }));
     } finally {
       setApplyingId(null);
     }
@@ -148,9 +164,10 @@ const JobListings = () => {
             </div>
             <span className="text-lg font-semibold text-white">InterviewIQ</span>
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <Link to="/dashboard" className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors">Dashboard</Link>
             <Link to="/applications" className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors">My Applications</Link>
+            <Link to="/profile" className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors font-medium">Profile</Link>
           </div>
         </div>
       </nav>
@@ -259,8 +276,10 @@ const JobListings = () => {
                         <div className={`border rounded-xl px-4 py-3 ${scoreBg(score)}`}>
                           <div className={`text-2xl font-bold tabular-nums ${scoreColor(score)}`}>{score}%</div>
                           <div className="text-[10px] text-zinc-500 mt-0.5">CV Match</div>
-                          <div className={`text-[10px] mt-1 ${score >= threshold ? 'text-emerald-400' : 'text-red-400'}`}>
-                            {score >= threshold ? '✓ Above threshold' : `✗ Need ${threshold}%`}
+                          <div className={`text-[10px] mt-1 font-bold ${preview?.will_pass ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {preview?.will_pass ? '✓ Above threshold' : 
+                             (preview?.experience_passed === false || preview?.education_passed === false) ? '✗ Requirements Not Met' :
+                             `✗ Need ${threshold}%`}
                           </div>
                         </div>
                       ) : (
@@ -276,42 +295,88 @@ const JobListings = () => {
                   <div className="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between gap-4">
                     <button
                       onClick={() => setSelectedJob(job)}
-                      className="text-sm text-sky-400 hover:text-sky-300 transition-colors flex items-center gap-1"
+                      className="text-sm font-bold text-sky-400 hover:text-sky-300 transition-colors flex items-center gap-1 group"
                     >
-                      View details <ChevronRight className="w-3.5 h-3.5" />
+                      View details 
+                      <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                     </button>
 
                     {result?.error ? (
                       <div className="flex flex-col items-end gap-1">
-                        <span className="text-red-400 text-[11px] font-medium">{result.error}</span>
+                        <span className="text-red-400 text-[11px] font-bold bg-red-500/10 px-2 py-0.5 rounded-lg border border-red-500/20">
+                          {result.error}
+                        </span>
                         {result.error.includes('upload your CV') && (
-                          <label className="cursor-pointer px-3 py-1 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg text-[10px] font-bold text-sky-400 transition-colors">
+                          <label className="cursor-pointer px-3 py-1 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg text-[10px] font-bold text-sky-400 transition-colors mt-1">
                             {uploading ? 'Uploading...' : 'Quick Upload CV'}
                             <input type="file" className="hidden" onChange={handleCVUpload} accept=".pdf,.docx,.txt" />
                           </label>
                         )}
+                        {!isApplied && !result.error.includes('already') && (
+                          <button 
+                            onClick={() => { setApplyResults(prev => ({ ...prev, [job.id]: null })); handleApply(job.id); }}
+                            className="text-[10px] text-zinc-500 hover:text-zinc-300 underline mt-1"
+                          >
+                            Retry Application
+                          </button>
+                        )}
                       </div>
                     ) : isInterviewPending ? (
                       <button
-                        onClick={() => navigate('/interview/new', { state: { jobTitle: job.title, jobId: job.id } })}
-                        className="flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-sm font-bold text-white transition-all shadow-lg shadow-emerald-950/20"
+                        onClick={() => navigate('/interview/new', { state: { jobTitle: job.title, jobId: job.id, questionCount: job.total_questions, timeLimitMinutes: job.time_limit_minutes } })}
+                        className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-sm font-black text-white transition-all shadow-xl shadow-emerald-500/20 active:scale-95 animate-pulse-glow"
                       >
-                        Start AI Interview <Sparkles className="w-3.5 h-3.5" />
+                        Start AI Interview <Sparkles className="w-4 h-4" />
                       </button>
                     ) : isApplied ? (
                       <div className="text-right">
-                        <span className={`text-sm font-bold flex items-center gap-1.5 ${isRejected ? 'text-red-400' : status === 'shortlisted' ? 'text-emerald-400' : 'text-sky-400'}`}>
-                          {status === 'cv_failed' ? '✗ CV Match Failed' :
-                           status === 'rejected' ? '✗ Application Rejected' :
-                           status === 'interview_completed' ? '✓ Interview Finished' :
-                           status === 'pending_review' ? '⏳ Pending Review' :
-                           status === 'shortlisted' ? '🎉 Shortlisted' :
-                           '✓ Application Pending'}
-                        </span>
-                        <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mt-0.5">
+                        <div className={`text-sm font-bold flex items-center justify-end gap-2 ${
+                          isRejected ? 'text-red-400' : 
+                          status === 'shortlisted' ? 'text-emerald-400' : 
+                          'text-sky-400'
+                        }`}>
+                          {status === 'cv_failed' ? (
+                            <>
+                              <span className="w-2 h-2 bg-red-500 rounded-full" />
+                              CV Match Failed
+                            </>
+                          ) : status === 'rejected' ? (
+                            <>
+                              <span className="w-2 h-2 bg-red-500 rounded-full" />
+                              Application Rejected
+                            </>
+                          ) : job.interview_status === 'disqualified' ? (
+                            <>
+                              <div className="w-2 h-2 bg-red-500 rounded-full" />
+                              Disqualified
+                            </>
+                          ) : status === 'interview_completed' ? (
+                            <>
+                              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                              Interview Finished
+                            </>
+                          ) : status === 'pending_review' ? (
+                            <>
+                              <div className="w-2 h-2 bg-sky-500 rounded-full animate-pulse" />
+                              Pending Review
+                            </>
+                          ) : status === 'shortlisted' ? (
+                            <>
+                              <Sparkles className="w-4 h-4 text-emerald-400" />
+                              Shortlisted
+                            </>
+                          ) : (
+                            <>
+                              <div className="w-2 h-2 bg-sky-500 rounded-full animate-pulse" />
+                              Application Submitted
+                            </>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black mt-1 opacity-60">
                           {status.replace('_', ' ')}
                         </p>
                       </div>
+
                     ) : (
                       <button
                         onClick={() => handleApply(job.id)}
@@ -384,7 +449,7 @@ const JobListings = () => {
 
                 if (isInterviewPending) return (
                   <button 
-                    onClick={() => { navigate('/interview/new', { state: { jobTitle: selectedJob.title, jobId: selectedJob.id } }); setSelectedJob(null); }} 
+                    onClick={() => { navigate('/interview/new', { state: { jobTitle: selectedJob.title, jobId: selectedJob.id, questionCount: selectedJob.total_questions, timeLimitMinutes: selectedJob.time_limit_minutes } }); setSelectedJob(null); }} 
                     className="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-sm font-bold text-white transition-colors flex items-center gap-2"
                   >
                     Start AI Interview <Sparkles className="w-3.5 h-3.5" />
@@ -393,7 +458,7 @@ const JobListings = () => {
 
                 if (isApplied) return (
                   <div className="px-6 py-2.5 bg-zinc-800 rounded-xl text-sm font-bold text-zinc-400">
-                    {status.toUpperCase().replace('_', ' ')}
+                    {selectedJob.interview_status === 'disqualified' ? 'DISQUALIFIED' : status.toUpperCase().replace('_', ' ')}
                   </div>
                 );
 

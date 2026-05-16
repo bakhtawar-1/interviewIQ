@@ -29,6 +29,10 @@ const AdminPanel = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [msg, setMsg] = useState({ type: '', text: '' });
 
+  // Modal State
+  const [selectedRecruiter, setSelectedRecruiter] = useState(null);
+  const [adminReason, setAdminReason] = useState('');
+
   useEffect(() => {
     if (!token) { navigate('/signin'); return; }
     loadAll();
@@ -73,15 +77,18 @@ const AdminPanel = () => {
     } catch {}
   };
 
-  const handleApprove = async (userId, action) => {
+  const handleApprove = async (userId, action, reason = '') => {
     setRefreshing(true);
     try {
       const res = await fetch(`${API}/api/admin/recruiters/${userId}/${action}`, {
         method: 'PATCH',
-        headers
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason })
       });
       if (!res.ok) throw new Error(`Failed to ${action}`);
       setMsg({ type: 'success', text: `Recruiter ${action}ed successfully!` });
+      setSelectedRecruiter(null);
+      setAdminReason('');
       loadAll();
     } catch (e) {
       setMsg({ type: 'error', text: e.message });
@@ -208,16 +215,10 @@ const AdminPanel = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <button 
-                            onClick={() => handleApprove(r.id, 'approve')}
-                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-xs font-bold text-white transition-colors"
+                            onClick={() => setSelectedRecruiter(r)}
+                            className="px-4 py-2 bg-sky-600/10 hover:bg-sky-600/20 text-sky-400 border border-sky-500/20 rounded-xl text-xs font-bold transition-all"
                           >
-                            Approve
-                          </button>
-                          <button 
-                            onClick={() => handleApprove(r.id, 'reject')}
-                            className="px-4 py-2 bg-zinc-800 hover:bg-red-900/30 hover:text-red-400 rounded-xl text-xs font-bold text-zinc-400 transition-colors"
-                          >
-                            Reject
+                            Review Details
                           </button>
                         </div>
                       </div>
@@ -225,6 +226,87 @@ const AdminPanel = () => {
                   </div>
                 )}
               </section>
+            )}
+
+            {/* Approval Modal */}
+            {selectedRecruiter && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-zinc-950/80 backdrop-blur-sm" onClick={() => setSelectedRecruiter(null)} />
+                <div className="relative w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                  <div className="p-8">
+                    <div className="flex items-start justify-between mb-8">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 bg-sky-500/10 rounded-2xl flex items-center justify-center text-sky-400 border border-sky-500/20">
+                          <Building2 className="w-8 h-8" />
+                        </div>
+                        <div>
+                          <h3 className="text-2xl font-bold text-white">{selectedRecruiter.full_name}</h3>
+                          <p className="text-zinc-500 flex items-center gap-2 mt-1">
+                            <Mail className="w-4 h-4" /> {selectedRecruiter.email}
+                          </p>
+                        </div>
+                      </div>
+                      <button onClick={() => setSelectedRecruiter(null)} className="text-zinc-500 hover:text-white transition-colors">
+                        <XCircle className="w-6 h-6" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block mb-1">Organisation</label>
+                          <div className="p-3 bg-zinc-950/50 border border-zinc-800 rounded-xl text-white font-medium flex items-center gap-2">
+                            <Building2 className="w-4 h-4 text-sky-400" /> {selectedRecruiter.company_name || 'N/A'}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block mb-1">Company Email</label>
+                          <div className="p-3 bg-zinc-950/50 border border-zinc-800 rounded-xl text-white font-medium flex items-center gap-2">
+                            <Mail className="w-4 h-4 text-sky-400" /> {selectedRecruiter.company_email || 'N/A'}
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block mb-1">Registration Justification</label>
+                        <div className="p-4 bg-zinc-950/50 border border-zinc-800 rounded-xl text-zinc-300 text-sm italic leading-relaxed h-[116px] overflow-y-auto">
+                          "{selectedRecruiter.justification || 'No justification provided.'}"
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block mb-2">Admin Notes / Feedback (Optional)</label>
+                        <textarea
+                          value={adminReason}
+                          onChange={e => setAdminReason(e.target.value)}
+                          placeholder="Provide a reason for approval or rejection (shared with recruiter)..."
+                          rows={3}
+                          className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-3 px-4 text-white text-sm focus:outline-none focus:border-sky-500/50 resize-none transition-all"
+                        />
+                      </div>
+
+                      <div className="flex gap-3 pt-2">
+                        <button
+                          onClick={() => handleApprove(selectedRecruiter.id, 'approve', adminReason)}
+                          disabled={refreshing}
+                          className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-bold text-white flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-950/20 disabled:opacity-50"
+                        >
+                          {refreshing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-5 h-5" />}
+                          Approve Request
+                        </button>
+                        <button
+                          onClick={() => handleApprove(selectedRecruiter.id, 'reject', adminReason)}
+                          disabled={refreshing}
+                          className="flex-1 py-4 bg-zinc-800 hover:bg-red-900/40 hover:text-red-400 border border-transparent hover:border-red-900/50 rounded-2xl font-bold text-zinc-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                          <XCircle className="w-5 h-5" /> Reject Request
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
 
             {activeTab === 'analytics' && stats && (

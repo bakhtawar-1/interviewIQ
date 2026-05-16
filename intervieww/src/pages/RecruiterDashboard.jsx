@@ -276,7 +276,7 @@ const RecruiterDashboard = () => {
                       </div>
                       <div className="flex gap-2">
                         <Link to={`/recruiter/jobs/${job.id}`} className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-xs font-bold text-white text-center transition-colors">Manage</Link>
-                        <Link to={`/recruiter/applications?job_id=${job.id}`} className="flex-1 py-2.5 bg-sky-600 hover:bg-sky-500 rounded-xl text-xs font-bold text-white text-center transition-colors">Applications</Link>
+                        <Link to={`/recruiter/jobs/${job.id}/applications`} className="flex-1 py-2.5 bg-sky-600 hover:bg-sky-500 rounded-xl text-xs font-bold text-white text-center transition-colors">Applications</Link>
                       </div>
                     </div>
                   ))}

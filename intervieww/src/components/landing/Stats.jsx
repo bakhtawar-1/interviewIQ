@@ -32,22 +32,23 @@ const Stats = () => {
   return (
     <section className="relative py-20 px-6">
       <div className="max-w-7xl mx-auto">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {stats.map((stat, idx) => (
             <div
               key={idx}
-              className="group relative bg-zinc-900/40 backdrop-blur-sm rounded-2xl p-8 border border-zinc-800 hover:border-zinc-600 transition-all duration-300 hover:transform hover:scale-[1.02]"
+              className="group glass-card p-8 rounded-3xl hover-lift shadow-xl"
             >
-              <div className={`w-16 h-16 bg-gradient-to-br ${stat.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                {stat.icon}
+              <div className={`w-16 h-16 bg-gradient-to-br ${stat.color} rounded-2xl flex items-center justify-center mb-8 shadow-inner group-hover:scale-110 transition-transform duration-500`}>
+                {React.cloneElement(stat.icon, { className: 'w-8 h-8 text-white' })}
               </div>
-              <div className={`text-5xl font-bold mb-2 bg-gradient-to-br ${stat.color} bg-clip-text text-transparent`}>
+              <div className="text-4xl font-black mb-3 text-white tracking-tight">
                 {stat.number}
               </div>
-              <div className="text-xl font-semibold text-white">{stat.label}</div>
+              <div className="text-sm font-bold text-zinc-500 uppercase tracking-widest">{stat.label}</div>
             </div>
           ))}
         </div>
+
       </div>
     </section>
   );

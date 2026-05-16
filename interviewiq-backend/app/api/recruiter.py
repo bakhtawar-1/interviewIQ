@@ -65,6 +65,10 @@ def _build_report_document(db: Session, interview_id: int) -> Tuple[str, str]:
     diff = getattr(interview.difficulty, "value", interview.difficulty)
     st = getattr(interview.status, "value", interview.status)
     lines.append(f"Type: {it}  |  Difficulty: {diff}  |  Status: {st}")
+    if st == "disqualified":
+        lines.append("")
+        lines.append("!!! DISQUALIFIED !!!")
+        lines.append("Reason: High proctoring violation count detected during session.")
     if interview.overall_score is not None:
         lines.append(f"Overall score: {round(float(interview.overall_score))}%")
     lines.append("")
@@ -217,6 +221,10 @@ def list_candidates(
                 full_name=c.full_name,
                 role=c.role,
                 is_active=c.is_active,
+                approval_status=c.approval_status,
+                skills=c.skills,
+                education=c.education,
+                experience=c.experience,
                 created_at=c.created_at,
                 interview_count=st["total"],
                 completed_interview_count=st["completed"],
@@ -264,6 +272,13 @@ def get_interview_summary(
     ).first()
     if not summary:
         raise HTTPException(status_code=404, detail="Summary not found.")
+    
+    # Dynamic override for disqualified sessions (handles existing 'N/A' data)
+    if interview.status.value == 'disqualified' if hasattr(interview.status, 'value') else interview.status == 'disqualified':
+        summary.strengths = "N/A - Candidate disqualified due to proctoring violations."
+        summary.weaknesses = "High violation count detected. Candidate exceeded the maximum allowed proctoring violations."
+        summary.recommendations = "Rejected due to security/proctoring violations. Not recommended for further rounds."
+        
     return summary
 
 

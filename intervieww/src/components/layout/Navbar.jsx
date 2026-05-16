@@ -23,15 +23,16 @@ const Navbar = () => {
     <nav
       className={`fixed top-0 w-full z-50 transition-all duration-500 ${
         isScrolled
-          ? 'bg-zinc-950/90 backdrop-blur-xl shadow-lg shadow-black/20 border-b border-zinc-800/80'
+          ? 'glass-navbar shadow-2xl shadow-black/40'
           : 'bg-transparent'
       }`}
     >
+
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="relative w-11 h-11 rounded-xl bg-zinc-900 ring-1 ring-zinc-700 flex items-center justify-center group-hover:ring-sky-500/40 transition-all">
-              <Sparkles className="w-6 h-6 text-sky-400" />
+            <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-r from-sky-600 to-indigo-600 flex items-center justify-center group-hover:rotate-6 transition-transform shadow-lg shadow-sky-500/20">
+              <Sparkles className="w-6 h-6 text-white" />
             </div>
             <span className="text-2xl font-bold bg-gradient-to-r from-zinc-100 via-sky-200 to-sky-400 bg-clip-text text-transparent">
               InterviewIQ
@@ -67,7 +68,7 @@ const Navbar = () => {
             </Link>
             <Link
               to="/signup"
-              className="px-6 py-2.5 bg-sky-600 hover:bg-sky-500 rounded-xl font-semibold text-white transition-all shadow-md shadow-sky-900/30"
+              className="px-6 py-2.5 bg-sky-600 hover:bg-sky-500 rounded-xl font-bold text-white transition-all shadow-lg shadow-sky-900/30 animate-pulse-glow"
             >
               Get Started
             </Link>

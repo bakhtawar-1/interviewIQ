@@ -42,6 +42,9 @@ const ApplicationStatus = () => {
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/dashboard" className="flex items-center gap-2 text-zinc-400 hover:text-zinc-100 transition-colors text-sm"><ArrowLeft className="w-4 h-4" /> Dashboard</Link>
           <div className="flex items-center gap-2"><div className="w-7 h-7 rounded-lg bg-zinc-900 ring-1 ring-zinc-700 flex items-center justify-center"><Sparkles className="w-3 h-3 text-sky-400" /></div><span className="font-semibold text-white">InterviewIQ</span></div>
+          <div className="flex items-center gap-4">
+            <Link to="/profile" className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors font-medium">Profile</Link>
+          </div>
         </div>
       </nav>
       <div className="relative max-w-4xl mx-auto px-6 py-10">
@@ -61,7 +64,9 @@ const ApplicationStatus = () => {
                       {app.company_name && <p className="text-zinc-500 text-sm mt-0.5">{app.company_name}</p>}
                       <p className="text-zinc-600 text-xs mt-1">Applied {fmt(app.created_at)}</p>
                     </div>
-                    <span className={`px-3 py-1.5 rounded-full text-xs font-medium border ${cfg.color} shrink-0`}>{cfg.label}</span>
+                    <span className={`px-3 py-1.5 rounded-full text-xs font-medium border ${app.interview_status === 'disqualified' ? 'text-red-400 bg-red-500/10 border-red-500/30' : cfg.color} shrink-0`}>
+                      {app.interview_status === 'disqualified' ? 'Disqualified' : cfg.label}
+                    </span>
                   </div>
                   <div className="flex gap-3 mb-4 flex-wrap">
                     <div className="bg-zinc-800/50 rounded-xl px-4 py-2 text-center">
@@ -76,7 +81,8 @@ const ApplicationStatus = () => {
                     )}
                   </div>
                   {app.status === 'shortlisted' && <div className="px-4 py-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-300 text-sm mb-4">🎉 Congratulations! You have been shortlisted. The recruiter will be in touch with next steps.</div>}
-                  {(app.status === 'rejected' || app.status === 'cv_failed') && app.rejection_reason && <div className="px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-300 text-sm mb-4"><p className="font-medium mb-1">{app.status === 'cv_failed' ? 'CV did not meet threshold.' : 'Not selected for this role.'}</p><p className="text-red-400/80 text-xs">{app.rejection_reason}</p></div>}
+                  {app.interview_status === 'disqualified' && <div className="px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-300 text-sm mb-4"><p className="font-medium mb-1">Interview Disqualified</p><p className="text-red-400/80 text-xs">This application was rejected due to multiple proctoring violations detected during your AI interview.</p></div>}
+                  {(app.status === 'rejected' || app.status === 'cv_failed') && app.rejection_reason && app.interview_status !== 'disqualified' && <div className="px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-300 text-sm mb-4"><p className="font-medium mb-1">{app.status === 'cv_failed' ? 'CV did not meet threshold.' : 'Not selected for this role.'}</p><p className="text-red-400/80 text-xs">{app.rejection_reason}</p></div>}
                   {app.status === 'interview_pending' && (
                     <div className="flex items-center justify-between pt-3 border-t border-zinc-800">
                       <p className="text-amber-400 text-sm font-medium">Your interview is ready!</p>

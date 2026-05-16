@@ -164,15 +164,15 @@ def _extract_from_image(file_bytes: bytes) -> str:
 SAFE_SKILLS = [
     # Programming languages (unambiguous names)
     'python','javascript','typescript','kotlin','golang','rust','scala',
-    'matlab','haskell','perl','elixir','fortran','cobol',
+    'matlab','haskell','perl','elixir','fortran','cobol','java',
     'c++','c#',  # special char languages — handled with custom pattern
     'html','css','xml','json','yaml','markdown',  # markup/data formats
     # Frontend
-    'react','react.js','reactjs','angular','svelte','bootstrap','webpack','redux','mobx',
+    'react','react.js','reactjs', 'angular','svelte','bootstrap','webpack','redux','mobx',
     'gatsby','remix','tailwind','sass','scss','less','jquery','vue',
     'next.js','nextjs','nuxt','nuxtjs','vite','parcel','babel',
     # Backend
-    'django','fastapi','flask','laravel','express','nestjs','fastify',
+    'django','fastapi','flask', 'laravel','express','nestjs','fastify',
     'spring boot','springboot','asp.net','sinatra','grpc',
     'graphql','rest api','restful',
     # Databases
@@ -189,6 +189,8 @@ SAFE_SKILLS = [
     'matplotlib','seaborn','jupyter','langchain','openai','huggingface',
     'machine learning','deep learning','computer vision','nlp',
     'natural language processing','data science','data analysis',
+    'tf-idf','cosine similarity','n-gram','text vectorization','skill extraction',
+    'text processing',
     # Mobile
     'react native','flutter','android','ios','swiftui','xcode',
     'android studio','kotlin multiplatform',
@@ -197,6 +199,7 @@ SAFE_SKILLS = [
     'postman','swagger','tableau','power bi','grafana','datadog',
     'splunk','sentry','notion','slack','linux','unix','bash','shell',
     'docker compose','microservices','websocket','oauth','jwt',
+    'ms office','microsoft office',
     # Testing
     'recharts','chart.js','d3','visx',
     'jest','pytest','selenium','cypress','playwright','junit',
@@ -676,7 +679,7 @@ def parse_cv(file_bytes: bytes, filename: str) -> dict:
         'name':             name,
         'email':            _extract_email(raw),
         'phone':            _extract_phone(raw),
-        'skills':           skills[:15],
+        'skills':           skills[:30],
         'job_titles':       titles,
         'experience_years': exp_years,
         'education':        education,

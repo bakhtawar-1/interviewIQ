@@ -31,36 +31,39 @@ const HowItWorks = () => {
     <section id="how-it-works" className="relative py-32 px-6">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-6xl font-bold mb-6">
-            Get Started in <span className="text-gradient">3 Easy Steps</span>
+          <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tight">
+            Get Started in <span className="text-gradient-premium">3 Easy Steps</span>
           </h2>
-          <p className="text-xl text-zinc-400">From signup to success</p>
+          <p className="text-xl text-zinc-500 font-medium">From signup to career success</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-12">
+        <div className="grid md:grid-cols-3 gap-16">
           {steps.map((step, idx) => (
-            <div key={idx} className="text-center">
-              <div className={`text-7xl font-bold bg-gradient-to-br ${step.color} bg-clip-text text-transparent opacity-30 mb-6`}>
-                {step.number}
+            <div key={idx} className="text-center group">
+              <div className="relative mb-10">
+                <div className={`text-8xl font-black bg-gradient-to-br ${step.color} bg-clip-text text-transparent opacity-10 absolute -top-10 left-1/2 -translate-x-1/2 select-none group-hover:scale-110 transition-transform duration-700`}>
+                  {step.number}
+                </div>
+                <div className={`w-24 h-24 bg-gradient-to-br ${step.color} rounded-[2rem] flex items-center justify-center mx-auto relative z-10 shadow-2xl group-hover:rotate-6 transition-transform duration-500`}>
+                  {React.cloneElement(step.icon, { className: 'w-10 h-10 text-white' })}
+                </div>
               </div>
-              <div className={`w-20 h-20 bg-gradient-to-br ${step.color} rounded-3xl flex items-center justify-center mx-auto mb-6`}>
-                {step.icon}
-              </div>
-              <h3 className="text-2xl font-bold mb-4">{step.title}</h3>
-              <p className="text-zinc-400 text-lg">{step.description}</p>
+              <h3 className="text-2xl font-bold mb-4 tracking-tight text-white">{step.title}</h3>
+              <p className="text-zinc-400 text-lg leading-relaxed">{step.description}</p>
             </div>
           ))}
         </div>
 
-        <div className="mt-20 text-center">
+        <div className="mt-24 text-center">
           <Link
             to="/signup"
-            className="px-8 py-4 bg-sky-600 hover:bg-sky-500 rounded-2xl font-semibold text-lg transition-all inline-flex items-center gap-3 text-white shadow-lg shadow-sky-950/30"
+            className="px-10 py-5 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 rounded-2xl font-black text-xl text-white inline-flex items-center gap-4 shadow-2xl shadow-sky-500/20 hover-lift active:scale-95 transition-all animate-pulse-glow"
           >
             Start your journey
-            <ArrowRight className="w-5 h-5" />
+            <ArrowRight className="w-6 h-6" />
           </Link>
         </div>
+
       </div>
     </section>
   );

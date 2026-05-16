@@ -64,18 +64,18 @@ const Features = () => {
     <section id="features" className="relative py-32 px-6">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-6xl font-bold mb-6">
-            Everything You Need to <span className="text-gradient">Succeed</span>
+          <h2 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight">
+            Everything You Need to <span className="text-gradient-premium">Succeed</span>
           </h2>
           <p className="text-xl text-zinc-400">Whether preparing or screening candidates</p>
         </div>
 
         <div className="flex justify-center mb-16">
-          <div className="inline-flex bg-zinc-900/60 backdrop-blur-lg rounded-2xl p-1.5 border border-zinc-700/80">
+          <div className="inline-flex glass-panel rounded-2xl p-2">
             <button
               onClick={() => setActiveTab('candidate')}
-              className={`px-8 py-4 rounded-xl font-semibold transition-all ${
-                activeTab === 'candidate' ? 'bg-sky-600 text-white shadow-md shadow-sky-950/25' : 'text-zinc-400 hover:text-zinc-200'
+              className={`px-8 py-4 rounded-xl font-bold transition-all duration-300 ${
+                activeTab === 'candidate' ? 'bg-sky-600 text-white shadow-xl shadow-sky-500/20' : 'text-zinc-500 hover:text-zinc-200'
               }`}
             >
               <Users className="w-5 h-5 inline mr-2" />
@@ -83,8 +83,8 @@ const Features = () => {
             </button>
             <button
               onClick={() => setActiveTab('recruiter')}
-              className={`px-8 py-4 rounded-xl font-semibold transition-all ${
-                activeTab === 'recruiter' ? 'bg-sky-600 text-white shadow-md shadow-sky-950/25' : 'text-zinc-400 hover:text-zinc-200'
+              className={`px-8 py-4 rounded-xl font-bold transition-all duration-300 ${
+                activeTab === 'recruiter' ? 'bg-sky-600 text-white shadow-xl shadow-sky-500/20' : 'text-zinc-500 hover:text-zinc-200'
               }`}
             >
               <Target className="w-5 h-5 inline mr-2" />
@@ -97,16 +97,17 @@ const Features = () => {
           {currentFeatures.map((feature, idx) => (
             <div
               key={idx}
-              className="group bg-zinc-900/40 backdrop-blur-sm rounded-2xl p-8 border border-zinc-800 hover:border-zinc-600 transition-all hover:scale-[1.02]"
+              className="group glass-card p-8 rounded-3xl hover-lift shadow-xl"
             >
-              <div className={`w-14 h-14 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mb-6`}>
-                {feature.icon}
+              <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mb-8 shadow-inner group-hover:scale-110 transition-transform duration-500`}>
+                {React.cloneElement(feature.icon, { className: 'w-7 h-7 text-white' })}
               </div>
-              <h3 className="text-2xl font-bold mb-3">{feature.title}</h3>
-              <p className="text-zinc-400">{feature.description}</p>
+              <h3 className="text-2xl font-bold mb-4 tracking-tight text-white">{feature.title}</h3>
+              <p className="text-zinc-400 leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>
+
       </div>
     </section>
   );

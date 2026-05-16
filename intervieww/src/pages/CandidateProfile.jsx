@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Sparkles, LogOut, User, Upload, CheckCircle, X,
-  Briefcase, GraduationCap, Star, Save, ArrowLeft
+  Briefcase, GraduationCap, Star, Save, ArrowLeft, Info, HelpCircle, FileText
 } from 'lucide-react';
 
 const API = 'http://localhost:8000';
@@ -19,6 +19,7 @@ const CandidateProfile = () => {
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [form, setForm] = useState({ full_name: '', skills: '', education: '', experience: '' });
+  const [showATSModal, setShowATSModal] = useState(false);
 
   useEffect(() => {
     if (!token) { navigate('/signin'); return; }
@@ -91,6 +92,33 @@ const CandidateProfile = () => {
     }
   };
 
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const handleCVDelete = async () => {
+    setUploading(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    setShowConfirm(false);
+    const targetUrl = `${API}/api/candidate/remove-cv`;
+    try {
+      const res = await fetch(targetUrl, {
+        method: 'POST',
+        headers,
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || `Server error (${res.status}) at ${targetUrl}. Please restart your backend.`);
+      }
+      setSuccessMsg('CV deleted successfully.');
+      fetchProfile();
+    } catch (e) {
+      setErrorMsg(e.message);
+    } finally {
+      setUploading(false);
+      setTimeout(() => setSuccessMsg(''), 3000);
+    }
+  };
+
   if (loading) return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
       <div className="w-10 h-10 border-2 border-sky-500/40 border-t-sky-400 rounded-full animate-spin" />
@@ -120,9 +148,19 @@ const CandidateProfile = () => {
       </nav>
 
       <div className="relative max-w-3xl mx-auto px-6 py-10">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">My Profile</h1>
-          <p className="text-zinc-400 mt-1">Keep your profile complete for better CV match scores.</p>
+        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold text-white">My Profile</h1>
+              {profile?.cv_text && (
+                <div className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center gap-1.5 animate-fade-in">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                  <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">CV Active</span>
+                </div>
+              )}
+            </div>
+            <p className="text-zinc-400 mt-1">Keep your profile complete for better CV match scores.</p>
+          </div>
         </div>
 
         {successMsg && (
@@ -142,14 +180,57 @@ const CandidateProfile = () => {
             <div className="w-9 h-9 bg-sky-500/15 border border-sky-500/20 rounded-lg flex items-center justify-center">
               <Upload className="w-4 h-4 text-sky-400" />
             </div>
-            <div>
+            <div className="flex-1">
               <h2 className="text-white font-semibold">Upload CV</h2>
-              <p className="text-zinc-500 text-xs">PDF, DOCX or TXT — auto-fills your profile</p>
+              <div className="flex items-center gap-2">
+                <p className="text-zinc-500 text-xs">Only ATS friendly supported</p>
+                <button 
+                  onClick={() => setShowATSModal(true)}
+                  className="flex items-center gap-1 text-[10px] font-bold text-sky-400 hover:text-sky-300 transition-colors bg-sky-400/10 px-2 py-0.5 rounded-md border border-sky-400/20"
+                >
+                  <HelpCircle className="w-3 h-3" /> ATS Template Info
+                </button>
+              </div>
             </div>
           </div>
           {profile?.cv_text && (
-            <div className="mb-3 text-xs text-emerald-400 flex items-center gap-1">
-              <CheckCircle className="w-3 h-3" /> CV on file — you can re-upload to update it
+            <div className="mb-4 p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl flex items-center justify-between shadow-sm shadow-emerald-950/20">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-emerald-400">CV Verified & Active</div>
+                  <div className="text-[10px] text-zinc-500">Your profile is currently optimized for matching.</div>
+                </div>
+              </div>
+              
+              {showConfirm ? (
+                <div className="flex items-center gap-3 animate-fade-in-up">
+                  <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Delete permanent?</span>
+                  <div className="flex gap-1">
+                    <button 
+                      onClick={handleCVDelete}
+                      className="px-3 py-1 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-lg text-[10px] font-bold transition-all"
+                    >
+                      Yes, Delete
+                    </button>
+                    <button 
+                      onClick={() => setShowConfirm(false)}
+                      className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 rounded-lg text-[10px] font-bold transition-all"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => setShowConfirm(true)}
+                  className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-red-400 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" /> Remove CV
+                </button>
+              )}
             </div>
           )}
           <label className="cursor-pointer">
@@ -256,6 +337,71 @@ const CandidateProfile = () => {
           </button>
         </div>
       </div>
+
+      {/* ATS Info Modal */}
+      {showATSModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-8 max-h-[90vh] overflow-y-auto custom-scrollbar">
+              <div className="flex justify-between items-start mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-sky-500/20 flex items-center justify-center text-sky-400">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                  <h2 className="text-xl font-bold text-white">ATS-Friendly Guide</h2>
+                </div>
+                <button onClick={() => setShowATSModal(false)} className="p-2 hover:bg-zinc-800 rounded-xl text-zinc-500 hover:text-white transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-6 text-sm leading-relaxed">
+                <div className="rounded-2xl overflow-hidden border border-white/10 bg-black/20 mb-6">
+                  <img 
+                    src="/assets/ats-comparison.png" 
+                    alt="ATS Comparison" 
+                    className="w-full h-auto object-cover"
+                  />
+                </div>
+                
+                <p className="text-zinc-400">
+                  Applicant Tracking Systems (ATS) are used by recruiters to automatically scan and rank resumes. To ensure our AI can read your CV correctly, follow these rules:
+                </p>
+
+                <div className="grid grid-cols-1 gap-4">
+                  {[
+                    { title: 'Simple Layout', desc: 'Use a single-column layout. Avoid tables, columns, and text boxes.' },
+                    { title: 'Standard Fonts', desc: 'Use Arial, Calibri, or Roboto. Avoid complex custom fonts.' },
+                    { title: 'Clear Headings', desc: 'Use standard sections like "Experience", "Skills", and "Education".' },
+                    { title: 'No Images', desc: 'Do not include photos, charts, or graphics. They confuse the scanner.' },
+                  ].map((item, i) => (
+                    <div key={i} className="flex gap-4 p-4 bg-zinc-800/40 rounded-2xl border border-white/5">
+                      <div className="w-2 h-2 rounded-full bg-sky-500 mt-1.5 shrink-0" />
+                      <div>
+                        <div className="text-white font-bold mb-0.5">{item.title}</div>
+                        <div className="text-zinc-500 text-xs">{item.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
+                  <p className="text-emerald-400 text-xs font-medium">
+                    Tip: Save your resume as a standard PDF or DOCX file. Our AI works best with clean, text-based documents.
+                  </p>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setShowATSModal(false)}
+                className="w-full mt-8 py-3 bg-sky-600 hover:bg-sky-500 rounded-xl font-bold text-white transition-all shadow-lg shadow-sky-950/20"
+              >
+                Got it!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -4,6 +4,7 @@ utils/helpers.py - Helper Functions
 Small reusable utility functions used across the app.
 """
 
+from typing import List, Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -60,6 +61,22 @@ def get_current_user(
         )
 
     return user
+
+
+def get_optional_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+) -> Optional[User]:
+    """Same as get_current_user but does NOT raise error if token is missing/invalid."""
+    try:
+        payload = decode_access_token(token)
+        if payload:
+            user_id = payload.get("user_id")
+            if user_id:
+                return db.query(User).filter(User.id == user_id, User.is_active == True).first()
+    except Exception:
+        pass
+    return None
 
 
 def require_role(allowed_roles: list):

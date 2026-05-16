@@ -1,52 +1,60 @@
 """
 schemas/user.py - User Schemas (Pydantic)
 ==========================================
-Schemas are like "contracts" — they define what data is allowed IN and what
-data goes OUT of your API. They are NOT the database models.
-
-DIFFERENCE:
-- Model (models/user.py) = defines the DB TABLE structure
-- Schema (schemas/user.py) = defines what the API accepts/returns
-
-WHY SEPARATE?
-- You never want to return hashed_password in an API response
-- You want to validate email format before it touches the DB
-- Different endpoints need different shapes of user data
-
-SCHEMA TYPES:
-- UserCreate  → what you receive when someone REGISTERS
-- UserLogin   → what you receive when someone LOGS IN
-- UserOut     → what you RETURN (never includes password!)
-- Token       → JWT token response after login
+Defines what data goes in/out for user-related API endpoints.
 """
 
-from pydantic import BaseModel, EmailStr, Field, validator
+import re
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List
 from datetime import datetime
-from app.models.user import UserRole
+from app.models.user import UserRole, ApprovalStatus
 
 
-# ─── Input Schemas (what the API receives) ─────────────────────────────────
+# ─── Helpers ────────────────────────────────────────────────────────────────
+
+CNIC_PATTERN = re.compile(r"^\d{5}-\d{7}-\d$")
+
+
+# ─── Input Schemas ─────────────────────────────────────────────────────────
 
 class UserCreate(BaseModel):
     """Used when a new user registers."""
-    email: EmailStr          # Pydantic validates email format automatically!
+    email: EmailStr
     full_name: str
-    password: str            # Plain text password — we hash it in the service layer
-    role: UserRole = UserRole.candidate  # Default to candidate
+    password: str
+    role: UserRole = UserRole.candidate
 
-    @validator('password')
+    # CNIC required for candidates and recruiters
+    cnic: Optional[str] = None
+
+    # Recruiter-only fields
+    company_name: Optional[str] = None
+    company_email: Optional[EmailStr] = None
+    justification: Optional[str] = Field(None, description="Why you want to join as a recruiter")
+
+    @field_validator("password")
+    @classmethod
     def password_must_be_strong(cls, v):
-        """Simple password validation."""
         if len(v) < 8:
-            raise ValueError('Password must be at least 8 characters')
+            raise ValueError("Password must be at least 8 characters")
         return v
 
-    @validator('full_name')
+    @field_validator("full_name")
+    @classmethod
     def name_must_not_be_empty(cls, v):
         if not v.strip():
-            raise ValueError('Full name cannot be empty')
+            raise ValueError("Full name cannot be empty")
         return v.strip()
+
+    @field_validator("cnic")
+    @classmethod
+    def validate_cnic_format(cls, v):
+        if v is not None:
+            v = v.strip()
+            if not CNIC_PATTERN.match(v):
+                raise ValueError("CNIC must be in format: 00000-0000000-0")
+        return v
 
 
 class UserLogin(BaseModel):
@@ -55,28 +63,69 @@ class UserLogin(BaseModel):
     password: str
 
 
+class VerifyOTP(BaseModel):
+    """Used to verify email via OTP."""
+    email: EmailStr
+    otp_code: str = Field(..., min_length=6, max_length=6)
+
+
+class ResendOTP(BaseModel):
+    """Used to request a new OTP."""
+    email: EmailStr
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    otp_code: str = Field(..., min_length=6, max_length=6)
+    new_password: str = Field(..., min_length=8)
+
+
 class UserUpdate(BaseModel):
     """Used when updating profile — all fields optional."""
     full_name: Optional[str] = None
     email: Optional[EmailStr] = None
+    skills: Optional[str] = None
+    education: Optional[str] = None
+    experience: Optional[str] = None
 
 
-# ─── Output Schemas (what the API returns) ──────────────────────────────────
+# ─── Output Schemas ─────────────────────────────────────────────────────────
 
 class UserOut(BaseModel):
-    """
-    Safe user data to return in API responses.
-    Notice: NO hashed_password field! Never expose this.
-    """
+    """Safe user data to return in API responses — never includes password."""
     id: int
     email: str
     full_name: str
     role: UserRole
     is_active: bool
+    cnic: Optional[str] = None
+    company_name: Optional[str] = None
+    company_email: Optional[EmailStr] = None
+    justification: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    approval_status: ApprovalStatus
+    skills: Optional[str] = None
+    education: Optional[str] = None
+    experience: Optional[str] = None
+    cv_text: Optional[str] = None
     created_at: datetime
 
     class Config:
-        from_attributes = True  # Allows converting SQLAlchemy model → this schema
+        from_attributes = True
+
+
+class RegistrationResponse(BaseModel):
+    """Returned after initial registration, before OTP verification."""
+    id: int = 0
+    email: str
+    full_name: str
+    role: UserRole
+    debug_otp: Optional[str] = None
+    message: str = "OTP sent to email."
 
 
 class RecruiterCandidateOut(UserOut):
@@ -92,7 +141,7 @@ class RecruiterCandidateOut(UserOut):
 class Token(BaseModel):
     """Returned after successful login."""
     access_token: str
-    token_type: str = "bearer"  # Standard OAuth2 token type
+    token_type: str = "bearer"
 
 
 class TokenData(BaseModel):

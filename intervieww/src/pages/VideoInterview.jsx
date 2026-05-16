@@ -145,10 +145,29 @@ function WarningOverlay({ type, countdown, onDismiss }) {
   );
 }
 
+function TimeUpModal({ onConfirm }) {
+  return (
+    <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md">
+      <div className="bg-gray-900 border-2 border-sky-500/50 rounded-3xl p-8 max-w-sm w-full mx-4 text-center shadow-[0_0_50px_-12px_rgba(14,165,233,0.5)] animate-fade-in-up">
+        <div className="w-20 h-20 bg-sky-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+          <AlertCircle className="w-10 h-10 text-sky-400 animate-pulse"/>
+        </div>
+        <h2 className="text-white text-3xl font-black mb-3">Time's Up!</h2>
+        <p className="text-gray-300 text-sm mb-8 leading-relaxed">
+          Your interview session has reached the time limit. Don't worry, we're scoring the questions you've already answered!
+        </p>
+        <button onClick={onConfirm} className="w-full py-4 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 rounded-2xl font-bold text-white transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-sky-500/20">
+          View My Results
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // DISQUALIFIED SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
-function Disqualified({ log, onRetry }) {
+function Disqualified({ log, onRetry, isOfficial }) {
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center">
@@ -159,7 +178,7 @@ function Disqualified({ log, onRetry }) {
           <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"/>
           <span className="text-red-400 font-black text-xs uppercase tracking-widest">DISQUALIFIED</span>
         </div>
-        <h1 className="text-4xl font-black mb-2">Interview Terminated</h1>
+        <h1 className="text-4xl font-black mb-2">Disqualified</h1>
         <p className="text-gray-400 mb-6">You exceeded the maximum allowed violations.</p>
         <div className="bg-gray-900 border border-red-500/20 rounded-2xl p-5 mb-6 text-left space-y-2">
           <div className="text-red-400 text-xs font-bold uppercase mb-3 flex items-center gap-1.5"><ShieldAlert className="w-3.5 h-3.5"/>Violation Log</div>
@@ -171,9 +190,11 @@ function Disqualified({ log, onRetry }) {
         </div>
         <div className="flex gap-3">
           <Link to="/dashboard" className="flex-1 py-3 border border-white/10 rounded-xl text-gray-400 hover:text-white text-center text-sm">Dashboard</Link>
-          <button onClick={onRetry} className="flex-1 py-3 bg-gradient-to-r from-sky-500 to-blue-500 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
-            <RotateCcw className="w-4 h-4"/>Retry
-          </button>
+          {!isOfficial && (
+            <button onClick={onRetry} className="flex-1 py-3 bg-gradient-to-r from-sky-500 to-blue-500 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+              <RotateCcw className="w-4 h-4"/>Retry
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -205,6 +226,7 @@ export default function VideoInterview() {
   const [camError, setCamError]         = useState('');
   const [aiCaption, setAiCaption]       = useState('');
   const [timer, setTimer]               = useState(0);
+  const [subLoading, setSubLoading]     = useState(false);
 
   // ── CV + Role state ───────────────────────────────────────────────────────
   const [jobRole, setJobRole]           = useState(stateData.job_title || '');
@@ -228,6 +250,7 @@ export default function VideoInterview() {
   const [vCount, setVCount]       = useState(0);      // violations shown in header
   const [vLog, setVLog]           = useState([]);     // log shown in results
   const [disqualified, setDisq]   = useState(false);
+  const [showTimeUp, setShowTimeUp] = useState(false);
 
   // ── ALL proctoring truth in ONE mutable ref — ZERO stale closure bugs ───
   // Never read P.current in render, only in callbacks/effects
@@ -616,8 +639,9 @@ export default function VideoInterview() {
         const brightRatio = brightCenter / phonePix;
         const brightTopRatio = brightTop / topPix;
         // Balanced thresholds: still catches real phones, reduces no-phone noise.
-        const brightPhoneLike = brightRatio > 0.18 && (brightRatio - brightTopRatio) > 0.07;
-        const darkPhoneLike = darkRatio > 0.52 && totalRatio < 0.07;
+        // Disabled pixel-based phone detection due to high false positives from lighting/clothing.
+        const brightPhoneLike = false; // brightRatio > 0.18 && (brightRatio - brightTopRatio) > 0.07;
+        const darkPhoneLike = false; // darkRatio > 0.52 && totalRatio < 0.07;
         if (brightPhoneLike || darkPhoneLike) phoneScore = 1;
 
         // Track whether a real face was seen recently; phone checks require this.
@@ -689,9 +713,25 @@ export default function VideoInterview() {
     const voices = window.speechSynthesis.getVoices();
     const best = voices.find(v=>v.name.includes('Google')&&v.lang.startsWith('en-')) || voices.find(v=>v.lang.startsWith('en-'));
     if (best) u.voice = best;
-    u.onend  = ()=>{ setIsSpeaking(false); res(); };
-    u.onerror= ()=>{ setIsSpeaking(false); res(); };
-    window.speechSynthesis.speak(u);
+    
+    // Add fallback timeout because Chrome TTS often drops onend events
+    // Calculate expected duration based on word count (~200 WPM + buffer)
+    const expectedMs = Math.max(2000, (text.split(' ').length / 150) * 60000 + 1500);
+    const fallback = setTimeout(() => {
+      setIsSpeaking(false);
+      res();
+    }, expectedMs);
+
+    u.onend  = ()=>{ clearTimeout(fallback); setIsSpeaking(false); res(); };
+    u.onerror= ()=>{ clearTimeout(fallback); setIsSpeaking(false); res(); };
+    
+    try {
+      window.speechSynthesis.speak(u);
+    } catch {
+      clearTimeout(fallback);
+      setIsSpeaking(false);
+      res();
+    }
   });
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -812,41 +852,87 @@ export default function VideoInterview() {
   // ─────────────────────────────────────────────────────────────────────────
   // INTERVIEW FLOW
   // ─────────────────────────────────────────────────────────────────────────
+  const [dynamicTimeLimit, setDynamicTimeLimit] = useState(stateData.timeLimitMinutes || 0);
+
   const fetchQuestions = async () => {
-    // If CV uploaded — use CV-based questions from backend
-    if (cvData) {
-      return cvData.questions || [];
-    }
-    // Otherwise fetch role-based shuffled questions from backend
-    try {
-      const res = await fetch(`${API}/api/interview/questions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: jobRole, category: interviewType, count: 5 }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        return data.questions || [];
+    let qCount = stateData.questionCount || 5;
+    let tLimit = stateData.timeLimitMinutes || 0;
+    let customQs = [];
+    
+    // 1. Fetch official job config and custom questions
+    if (stateData.jobId) {
+      try {
+        const jobRes = await fetch(`${API}/api/jobs/${stateData.jobId}`);
+        if (jobRes.ok) {
+          const jobData = await jobRes.json();
+          if (jobData.total_questions) qCount = jobData.total_questions;
+          if (jobData.time_limit_minutes) {
+            tLimit = jobData.time_limit_minutes;
+            setDynamicTimeLimit(tLimit);
+          }
+          // Capture recruiter's manual questions
+          if (Array.isArray(jobData.custom_questions)) {
+            customQs = jobData.custom_questions.map(q => ({
+              text: q.question_text,
+              ideal: q.expected_keywords ? q.expected_keywords.join(' ') : '',
+              keywords: q.expected_keywords || [],
+              isCustom: true
+            }));
+          }
+        }
+      } catch (e) {
+        console.warn('[InterviewIQ] Failed to fetch exact job config', e);
       }
-    } catch {}
-    // Fallback: build bigger pool from all categories then shuffle
-    const allQ = [
-      ...ALL_QUESTIONS.behavioral,
-      ...ALL_QUESTIONS.hr,
-      ...(interviewType === 'technical' ? ALL_QUESTIONS.technical : []),
-    ];
-    // Shuffle Fisher-Yates
-    for (let i = allQ.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [allQ[i], allQ[j]] = [allQ[j], allQ[i]];
     }
-    // Deduplicate by text and take 5
-    const seen = new Set();
-    const unique = allQ.filter(q => {
-      if (seen.has(q.text)) return false;
-      seen.add(q.text); return true;
-    });
-    return unique.slice(0, 5);
+
+    // 2. Fetch AI-generated questions (from CV or Role)
+    let aiQs = [];
+    if (cvData) {
+      aiQs = cvData.questions || [];
+    } else {
+      try {
+        const res = await fetch(`${API}/api/interview/questions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: jobRole, category: interviewType, count: qCount }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          aiQs = data.questions || [];
+        }
+      } catch {}
+    }
+
+    // 3. Combine: Recruiter Questions FIRST, then fill the rest with AI
+    // Deduplicate if AI generated a question very similar to a custom one
+    const finalPool = [...customQs];
+    const seenTexts = new Set(customQs.map(q => q.text.toLowerCase()));
+
+    for (const q of aiQs) {
+      if (finalPool.length >= qCount) break;
+      if (!seenTexts.has(q.text.toLowerCase())) {
+        finalPool.push(q);
+        seenTexts.add(q.text.toLowerCase());
+      }
+    }
+
+    // Fallback: If still not enough, use local bank
+    if (finalPool.length < qCount) {
+      const local = [
+        ...ALL_QUESTIONS.behavioral,
+        ...ALL_QUESTIONS.hr,
+        ...(interviewType === 'technical' ? ALL_QUESTIONS.technical : []),
+      ];
+      for (const q of local) {
+        if (finalPool.length >= qCount) break;
+        if (!seenTexts.has(q.text.toLowerCase())) {
+          finalPool.push(q);
+          seenTexts.add(q.text.toLowerCase());
+        }
+      }
+    }
+
+    return finalPool.slice(0, qCount);
   };
 
   const startBackendInterview = async () => {
@@ -1003,10 +1089,12 @@ export default function VideoInterview() {
   }, [phase, qIndex, questions, mainQIndex]);
 
   const handleSubmit = async () => {
+    if (subLoading) return;
+    setSubLoading(true);
     stopListening();
     window.speechSynthesis.cancel(); setIsSpeaking(false);
     const ans = (transcript + (interim?' '+interim:'')).trim();
-    if (!ans) { setSpeechError('Please speak your answer before continuing.'); return; }
+    if (!ans) { setSpeechError('Please speak your answer before continuing.'); setSubLoading(false); return; }
 
     // What question is currently being answered?
     const isAnsweringFollowup = currentFollowup !== null;
@@ -1015,11 +1103,20 @@ export default function VideoInterview() {
     // ── Score answer (backend first, local fallback) ───────────────────────
     let score = 50, feedback = '', breakdown = {};
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout
       const res = await fetch(`${API}/api/interview/score-answer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: q.text, answer: ans }),
+        body: JSON.stringify({ 
+          question: q.text, 
+          answer: ans,
+          keywords: q.keywords || [],
+          ideal_answer: q.ideal || ""
+        }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
       if (res.ok) {
         const data = await res.json();
         score    = data.score;
@@ -1074,13 +1171,16 @@ export default function VideoInterview() {
             'Could not save completion to your dashboard (check API / DB). Your scores are shown below.'
           );
         }
+        setSubLoading(false);
+        setPhase('results');
+        stopCam(); 
         await speakText('You have completed all questions. Excellent work!');
-        stopCam(); setPhase('results');
       } else {
-        await speakText(verbal);
         setMainQIndex(nextMain);
         setQIndex(nextMain);
         hasSpokenRef.current = false;
+        setSubLoading(false);
+        await speakText(verbal);
       }
       return;
     }
@@ -1089,23 +1189,29 @@ export default function VideoInterview() {
     // Ask backend whether to follow up — backend decides based on answer content
     let followup = null;
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s timeout for followup
       const fRes = await fetch(`${API}/api/interview/followup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ previous_question: q.text, previous_answer: ans, score, breakdown }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
       if (fRes.ok) {
         const fData = await fRes.json();
         if (fData.has_followup) followup = fData.followup;
       }
-    } catch {}
+    } catch (e) {
+      console.log("Followup fetch failed or timed out", e);
+    }
 
     if (followup) {
       // Ask follow-up — don't advance mainQIndex yet
-      await speakText(verbal);
       setCurrentFollowup(followup);
       hasSpokenRef.current = true;
-      await speakText(followup.text); // speak the follow-up question directly
+      setSubLoading(false);
+      speakText(verbal).then(() => speakText(followup.text));
     } else {
       // Move to next main question
       const nextMain = mainQIndex + 1;
@@ -1123,13 +1229,16 @@ export default function VideoInterview() {
             'Could not save completion to your dashboard (check API / DB). Your scores are shown below.'
           );
         }
+        setSubLoading(false);
+        setPhase('results');
+        stopCam(); 
         await speakText('You have completed all questions. Excellent work!');
-        stopCam(); setPhase('results');
       } else {
-        await speakText(verbal);
         setMainQIndex(nextMain);
         setQIndex(nextMain);
         hasSpokenRef.current = false;
+        setSubLoading(false);
+        await speakText(verbal);
       }
     }
   };
@@ -1151,10 +1260,21 @@ export default function VideoInterview() {
         );
       }
     } else {
-      await persistVideoInterview('abandoned', null);
+      await persistVideoInterview('disqualified', null);
     }
     setPhase(results.length>0?'results':'lobby');
   };
+
+  // TIME LIMIT ENFORCEMENT
+  useEffect(() => {
+    if (phase === 'interview' && dynamicTimeLimit > 0 && timer >= dynamicTimeLimit * 60) {
+      clearInterval(timerRef.current);
+      setShowTimeUp(true);
+      stopListening();
+      window.speechSynthesis.cancel();
+      stopCam();
+    }
+  }, [timer, dynamicTimeLimit, phase]);
 
   const handleRetry = () => {
     P.current = { active:false, inWarning:false, micGrace:false, vCount:0, vLog:[], lastViolation:0, lastByType:{} };
@@ -1171,9 +1291,31 @@ export default function VideoInterview() {
 
   useEffect(() => {
     if (disqualified) {
-      persistVideoInterview('abandoned', null);
+      persistVideoInterview('disqualified', null);
     }
   }, [disqualified]);
+
+  // ABANDONMENT DETECTION — notify backend if tab is closed during interview
+  useEffect(() => {
+    if (phase !== 'interview' || !backendInterviewId) return;
+
+    const handleBeforeUnload = () => {
+      // Use keepalive: true to ensure the request finishes even if the page is closed
+      const body = JSON.stringify({ status: 'disqualified' });
+      fetch(`${API}/api/candidate/interviews/${backendInterviewId}/video-complete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body,
+        keepalive: true,
+      }).catch(() => {});
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [phase, backendInterviewId, token]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // DERIVED
@@ -1185,7 +1327,7 @@ export default function VideoInterview() {
   const progress  = mainQCount>0 ? Math.round((mainQIndex/mainQCount)*100) : 0;
 
   // ══════════════════════════════════════════════════════════════════════════
-  if (disqualified) return <Disqualified log={vLog} onRetry={handleRetry}/>;
+  if (disqualified) return <Disqualified log={vLog} onRetry={handleRetry} isOfficial={!!stateData.jobId}/>;
 
   // ══ LOBBY ════════════════════════════════════════════════════════════════
   if (phase==='lobby') return (
@@ -1378,8 +1520,10 @@ export default function VideoInterview() {
             ))}
           </div>
           <div className="flex gap-3">
-            <Link to="/dashboard" className="flex-1 py-3 border border-white/10 rounded-xl text-gray-400 hover:text-white transition-all text-center font-medium text-sm">Dashboard</Link>
-            <button onClick={handleRetry} className="flex-1 py-3 bg-gradient-to-r from-sky-500 to-blue-500 rounded-xl font-bold text-sm flex items-center justify-center gap-2"><RotateCcw className="w-4 h-4"/>Try Again</button>
+            <Link to="/dashboard" className="flex-1 py-3 border border-white/10 rounded-xl text-gray-400 hover:text-white transition-all text-center font-medium text-sm flex items-center justify-center">Go to Dashboard</Link>
+            {!stateData.jobId && (
+              <button onClick={handleRetry} className="flex-1 py-3 bg-gradient-to-r from-sky-500 to-blue-500 rounded-xl font-bold text-sm flex items-center justify-center gap-2"><RotateCcw className="w-4 h-4"/>Practice Again</button>
+            )}
           </div>
         </div>
       </div>
@@ -1392,6 +1536,9 @@ export default function VideoInterview() {
 
       {/* WARNING OVERLAY — absolute positioned over everything */}
       <WarningOverlay type={warning} countdown={warnCD} onDismiss={dismissWarning}/>
+      
+      {/* TIME UP MODAL */}
+      {showTimeUp && <TimeUpModal onConfirm={handleEnd} />}
 
       {/* TOP BAR */}
       <div className="bg-gray-900/80 border-b border-white/10 backdrop-blur px-5 py-2 flex items-center justify-between z-10">
@@ -1402,7 +1549,10 @@ export default function VideoInterview() {
             <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"/>
             <span className="text-red-400 text-xs font-medium">LIVE</span>
           </div>
-          <span className="text-gray-500 text-sm font-mono">{fmt(timer)}</span>
+          <span className="text-gray-500 text-sm font-mono">
+            {fmt(timer)}
+            {dynamicTimeLimit ? ` / ${fmt(dynamicTimeLimit * 60)}` : ''}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           {/* Live violation counter — updates every time */}
@@ -1453,7 +1603,6 @@ export default function VideoInterview() {
                 {isSpeaking&&<div className="flex gap-0.5 items-end h-3">{[0,1,2,3].map(i=><div key={i} className="w-0.5 rounded-full bg-sky-400 animate-bounce" style={{height:`${5+(i%2)*4}px`,animationDelay:`${i*0.08}s`}}/>)}</div>}
               </div>
               <p className="text-white text-sm leading-relaxed font-medium">{currentFollowup ? currentFollowup.text : q?.text}</p>
-              {aiCaption&&<div className="mt-2 pt-2 border-t border-sky-700/20 flex items-start gap-1.5"><Volume2 className="w-3 h-3 text-sky-400 flex-shrink-0 mt-0.5"/><p className="text-sky-300/60 text-xs italic truncate">{aiCaption}</p></div>}
             </div>
             <button onClick={()=>{stopListening(); hasSpokenRef.current=true; speakText(`Question ${qIndex+1}. ${q.text}`);}} disabled={isSpeaking}
               className="mt-2 w-full flex items-center justify-center gap-1.5 text-xs text-sky-400/60 hover:text-sky-300 disabled:opacity-30 py-1.5">
@@ -1549,9 +1698,11 @@ export default function VideoInterview() {
             className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 text-xs font-medium transition-all">
             <PhoneOff className="w-4 h-4"/>End
           </button>
-          <button onClick={handleSubmit} disabled={!fullText.trim()||isSpeaking}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-bold text-sm transition-all hover:scale-105">
-            {(!currentFollowup && mainQIndex+1>=mainQCount)?<><CheckCircle className="w-4 h-4"/>Finish</>:<>Next<ChevronRight className="w-4 h-4"/></>}
+          <button onClick={handleSubmit} disabled={!fullText.trim() || subLoading}
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-bold text-sm transition-all hover:scale-105 min-w-[100px] justify-center">
+            {subLoading ? <Loader className="w-4 h-4 animate-spin"/> : (
+              (!currentFollowup && mainQIndex+1>=mainQCount) ? <><CheckCircle className="w-4 h-4"/>Finish</> : <>Next<ChevronRight className="w-4 h-4"/></>
+            )}
           </button>
         </div>
       </div>

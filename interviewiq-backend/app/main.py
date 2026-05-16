@@ -1,96 +1,71 @@
 """
 main.py - FastAPI Application Entry Point
 ==========================================
-This is where everything comes together.
-FastAPI reads this file when you start the server.
-
-WHAT HAPPENS WHEN YOU RUN:
-  uvicorn app.main:app --reload
-
-1. FastAPI creates the "app" object
-2. All routers (auth, candidate, recruiter, admin) are registered
-3. The server starts listening on http://localhost:8000
-4. Visit http://localhost:8000/docs for the auto-generated API docs!
-
-startup_event():
-  Creates all database tables on startup (if they don't exist already).
-  This is safe to run multiple times — SQLAlchemy won't recreate existing tables.
+All routers registered here. Visit /docs for Swagger UI.
 """
-from app.api.interview_ai import router as interview_ai_router
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine
 from app.api import auth, candidate, recruiter, admin
-
-# ─── Create FastAPI App ────────────────────────────────────────────────────
+from app.api.interview_ai import router as interview_ai_router
+from app.api.jobs import recruiter_router as jobs_recruiter_router, public_router as jobs_public_router
+from app.api.applications import router as applications_router
+from app.api.recruiter_review import router as recruiter_review_router
 
 app = FastAPI(
     title="InterviewIQ API",
-    description="AI-powered mock interview platform backend",
-    version="1.0.0",
-    docs_url="/docs",       # Swagger UI at http://localhost:8000/docs
-    redoc_url="/redoc",     # ReDoc UI at http://localhost:8000/redoc
+    description="AI-powered interview platform backend",
+    version="2.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
-# ─── CORS Middleware ───────────────────────────────────────────────────────
-# CORS = Cross-Origin Resource Sharing
-# Your React frontend (running on localhost:3000) needs permission
-# to talk to your backend (running on localhost:8000)
-# Without this, the browser will BLOCK all requests!
-
+# ── CORS ──────────────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",   # React dev server
-        "http://localhost:5173",   # Vite dev server (alternative)
+        "http://localhost:3000",
+        "http://localhost:5173",
     ],
     allow_credentials=True,
-    allow_methods=["*"],           # Allow all HTTP methods (GET, POST, DELETE, etc.)
-    allow_headers=["*"],           # Allow all headers (including Authorization)
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# ─── Register Routers ──────────────────────────────────────────────────────
-# Each router is a group of related endpoints defined in the api/ folder
+# ── Routers ───────────────────────────────────────────────────────────────────
+app.include_router(auth.router)
+app.include_router(candidate.router)
+app.include_router(recruiter.router)
+app.include_router(admin.router)
 app.include_router(interview_ai_router)
-app.include_router(auth.router)       # /api/auth/...
-app.include_router(candidate.router)  # /api/candidate/...
-app.include_router(recruiter.router)  # /api/recruiter/...
-app.include_router(admin.router)      # /api/admin/...
 
-# ─── Database Table Creation ───────────────────────────────────────────────
+# New routers (Phase 2)
+app.include_router(jobs_recruiter_router)   # /api/recruiter/jobs
+app.include_router(jobs_public_router)      # /api/jobs
+app.include_router(applications_router)     # /api/candidate/apply + /api/candidate/applications
+app.include_router(recruiter_review_router) # /api/recruiter/applications
 
+
+# ── Database init ─────────────────────────────────────────────────────────────
 @app.on_event("startup")
 def startup_event():
-    """
-    Runs ONCE when the server starts.
-    Creates all tables defined in models/ if they don't exist yet.
-    
-    In production, you'd use Alembic migrations instead of this.
-    For development/FYP, this is fine!
-    """
-    # This imports all models so SQLAlchemy knows about all tables
-    import app.models  # noqa: F401
+    import app.models  # noqa: F401 — ensures all models are imported before create_all
+    from app.utils.db_migrations import run_manual_migrations
+    try:
+        run_manual_migrations()
+    except Exception as e:
+        print(f"Migration warning: {e}")
     Base.metadata.create_all(bind=engine)
     print("✅ Database tables created/verified!")
 
 
-# ─── Health Check Endpoint ─────────────────────────────────────────────────
-
+# ── Health ────────────────────────────────────────────────────────────────────
 @app.get("/", tags=["Health"])
 def root():
-    """
-    Health check endpoint.
-    Visit http://localhost:8000/ to verify the server is running.
-    """
-    return {
-        "status": "running",
-        "app": "InterviewIQ API",
-        "version": "1.0.0",
-        "docs": "/docs"
-    }
+    return {"status": "running", "app": "InterviewIQ API", "version": "2.0.0", "docs": "/docs"}
 
 
 @app.get("/health", tags=["Health"])
 def health_check():
-    """Simple health check for deployment monitoring."""
     return {"status": "healthy"}

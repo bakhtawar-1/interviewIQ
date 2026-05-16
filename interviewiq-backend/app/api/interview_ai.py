@@ -59,6 +59,8 @@ def _get_generator():
 class ScoreRequest(BaseModel):
     question: str
     answer: str
+    keywords: Optional[List[str]] = []
+    ideal_answer: Optional[str] = ""
 
 class QuestionsRequest(BaseModel):
     role: Optional[str] = ""
@@ -77,7 +79,7 @@ class FollowupRequest(BaseModel):
 @router.post("/score-answer")
 async def score_answer_endpoint(req: ScoreRequest):
     """
-    Score a candidate's answer.
+    Score a candidate's answer using sentence-transformers (via evaluation_service).
 
     Returns:
       score (0-100), feedback (string), breakdown (dict)
@@ -85,9 +87,14 @@ async def score_answer_endpoint(req: ScoreRequest):
     if not req.answer or not req.answer.strip():
         return {"score": 0, "feedback": "No answer provided.", "breakdown": {}}
 
-    score_fn = _get_scorer()
-    result   = score_fn(req.question, req.answer)
-    return result
+    from app.services.evaluation_service import score_response
+    score, feedback = score_response(req.answer, req.ideal_answer, req.keywords)
+    
+    return {
+        "score": score,
+        "feedback": feedback,
+        "breakdown": {}
+    }
 
 
 @router.post("/upload-cv")
@@ -160,7 +167,7 @@ async def get_questions(req: QuestionsRequest):
     questions = gen_from_role(
         role=req.role or '',
         category=req.category or 'mixed',
-        count=min(req.count or 5, 10),
+        count=min(req.count or 5, 30),
     )
     return {
         "questions": questions,

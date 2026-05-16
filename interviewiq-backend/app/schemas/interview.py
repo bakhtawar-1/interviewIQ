@@ -17,6 +17,8 @@ class InterviewCreate(BaseModel):
     interview_type: InterviewType = InterviewType.behavioral
     difficulty: DifficultyLevel = DifficultyLevel.medium
     job_title: Optional[str] = None
+    application_id: Optional[int] = None
+    is_mock: bool = False
 
 
 class InterviewUpdate(BaseModel):
@@ -56,6 +58,8 @@ class InterviewOut(BaseModel):
     """What we return when someone requests interview data."""
     id: int
     user_id: int
+    application_id: Optional[int] = None
+    is_mock: bool
     interview_type: InterviewType
     status: InterviewStatus
     difficulty: DifficultyLevel
