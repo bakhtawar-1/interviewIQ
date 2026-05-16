@@ -7,7 +7,7 @@ import {
   Target, Activity, RefreshCw
 } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+import { API_URL } from '../config';
 
 const STATUS_MAP = {
   applied: { label: 'Applied', color: 'text-zinc-500 bg-zinc-800 border-zinc-700' },
@@ -44,26 +44,26 @@ const RecruiterDashboard = () => {
     setError('');
     try {
       // 1. Me
-      const meRes = await fetch(`${API}/api/auth/me`, { headers });
+      const meRes = await fetch(`${API_URL}/api/auth/me`, { headers });
       if (meRes.status === 401) { navigate('/signin'); return; }
       const meData = await meRes.json();
       setUser(meData);
       if (meData.role !== 'recruiter' && meData.role !== 'admin') { navigate('/dashboard'); return; }
 
       // 2. Applications
-      const appRes = await fetch(`${API}/api/recruiter/applications`, { headers });
+      const appRes = await fetch(`${API_URL}/api/recruiter/applications`, { headers });
       const appsData = await appRes.json();
       const appsArray = Array.isArray(appsData) ? appsData : [];
       setApplications(appsArray);
  
       // 3. Jobs
-      const jobsRes = await fetch(`${API}/api/recruiter/jobs`, { headers });
+      const jobsRes = await fetch(`${API_URL}/api/recruiter/jobs`, { headers });
       const jobsData = await jobsRes.json();
       const jobsArray = Array.isArray(jobsData) ? jobsData : [];
       setJobs(jobsArray);
       
       // 4. Candidates
-      const cRes = await fetch(`${API}/api/recruiter/candidates`, { headers });
+      const cRes = await fetch(`${API_URL}/api/recruiter/candidates`, { headers });
       const cData = await cRes.json();
       setCandidates(Array.isArray(cData) ? cData : []);
 

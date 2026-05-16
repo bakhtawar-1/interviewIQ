@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowLeft, CheckCircle, XCircle, Clock, Briefcase, Play, ChevronRight, AlertCircle, FileText } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+import { API_URL } from '../config';
 
 const STATUS_CONFIG = {
   applied:             { label: 'Applied',            color: 'text-zinc-400 bg-zinc-800 border-zinc-700' },
@@ -24,7 +24,7 @@ const ApplicationStatus = () => {
 
   useEffect(() => {
     if (!token) { navigate('/signin'); return; }
-    fetch(`${API}/api/candidate/applications`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API_URL}/api/candidate/applications`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.status === 401 ? navigate('/signin') : r.json())
       .then(d => setApplications(Array.isArray(d) ? d : []))
       .catch(() => setError('Failed to load applications.'))

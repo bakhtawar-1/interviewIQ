@@ -6,7 +6,7 @@ import {
   FileText, TrendingUp, Shield, BarChart3, Download
 } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+import { API_URL } from '../config';
 
 const RecruiterApplicationReview = () => {
   const { applicationId } = useParams();
@@ -36,7 +36,7 @@ const RecruiterApplicationReview = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const appRes = await fetch(`${API}/api/recruiter/applications/${applicationId}`, { headers });
+      const appRes = await fetch(`${API_URL}/api/recruiter/applications/${applicationId}`, { headers });
       if (!appRes.ok) throw new Error('Failed to load application');
       const appData = await appRes.json();
       setApplication(appData);
@@ -49,7 +49,7 @@ const RecruiterApplicationReview = () => {
       });
 
       if (appData.interview_id) {
-        const reportRes = await fetch(`${API}/api/recruiter/applications/${applicationId}/interview-report`, { headers });
+        const reportRes = await fetch(`${API_URL}/api/recruiter/applications/${applicationId}/interview-report`, { headers });
         if (reportRes.ok) {
           setReport(await reportRes.json());
         }
@@ -66,7 +66,7 @@ const RecruiterApplicationReview = () => {
     setError('');
     setSuccess('');
     try {
-      const res = await fetch(`${API}/api/recruiter/applications/${applicationId}/review`, {
+      const res = await fetch(`${API_URL}/api/recruiter/applications/${applicationId}/review`, {
         method: 'PATCH',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({

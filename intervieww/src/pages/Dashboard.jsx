@@ -6,7 +6,7 @@ import {
   Briefcase, FileText, LayoutDashboard, Search, Activity, Building2
 } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+import { API_URL } from '../config';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ const Dashboard = () => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
       
-      const meRes = await fetch(`${API}/api/auth/me`, { headers });
+      const meRes = await fetch(`${API_URL}/api/auth/me`, { headers });
       if (meRes.status === 401) { navigate('/signin'); return; }
       const meData = await meRes.json();
       setUser(meData);
@@ -36,8 +36,8 @@ const Dashboard = () => {
 
       // Parallel fetch
       const [intRes, appRes] = await Promise.all([
-        fetch(`${API}/api/candidate/interviews`, { headers }),
-        fetch(`${API}/api/candidate/applications`, { headers })
+        fetch(`${API_URL}/api/candidate/interviews`, { headers }),
+        fetch(`${API_URL}/api/candidate/applications`, { headers })
       ]);
 
       const intData = await intRes.json();

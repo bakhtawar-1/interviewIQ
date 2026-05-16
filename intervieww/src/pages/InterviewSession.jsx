@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Sparkles, ChevronRight, CheckCircle, AlertCircle, Mic, MicOff, Volume2, VolumeX, Loader, Star } from 'lucide-react';
+import { API_URL } from '../config';
 import { speak, stopSpeaking, startListening, stopListening, isTTSSupported, isSTTSupported } from '../services/speechService';
 import { scoreAnswerLocal } from '../utils/scoreAnswerLocal';
 
@@ -90,7 +91,7 @@ const InterviewSession = () => {
 
   const loadInterview = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/api/candidate/interviews/${id}`, {
+      const res = await fetch(`${API_URL}/api/candidate/interviews/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) { navigate('/dashboard'); return; }
@@ -99,7 +100,7 @@ const InterviewSession = () => {
 
       // Try DB questions
       const qRes = await fetch(
-        `http://localhost:8000/api/questions?interview_type=${data.interview_type}&difficulty=${data.difficulty}&page_size=5`,
+        `${API_URL}/api/questions?interview_type=${data.interview_type}&difficulty=${data.difficulty}&page_size=5`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       let qs = [];
@@ -163,7 +164,7 @@ const InterviewSession = () => {
     if (currentQ.fromDB && currentQ.id) {
       // ── Backend AI scoring for DB questions ──
       try {
-        const res = await fetch(`http://localhost:8000/api/candidate/interviews/${id}/respond`, {
+        const res = await fetch(`${API_URL}/api/candidate/interviews/${id}/respond`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ question_id: currentQ.id, response_text: answer }),
@@ -190,7 +191,7 @@ const InterviewSession = () => {
       setCompletingInterview(true);
       // Try to complete on backend if it was a DB interview
       try {
-        const completeRes = await fetch(`http://localhost:8000/api/candidate/interviews/${id}/complete`, {
+        const completeRes = await fetch(`${API_URL}/api/candidate/interviews/${id}/complete`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` }
         });

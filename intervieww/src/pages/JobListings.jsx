@@ -5,7 +5,7 @@ import {
   ChevronRight, ArrowRight, GraduationCap
 } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+import { API_URL } from '../config';
 
 const JobListings = () => {
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ const JobListings = () => {
 
   const fetchPreview = useCallback(async (jobId) => {
     try {
-      const res = await fetch(`${API}/api/jobs/${jobId}/cv-preview`, { headers });
+      const res = await fetch(`${API_URL}/api/jobs/${jobId}/cv-preview`, { headers });
       if (res.ok) {
         const d = await res.json();
         setPreviewScores(prev => ({ ...prev, [jobId]: d }));
@@ -35,13 +35,13 @@ const JobListings = () => {
 
   const fetchJobs = useCallback(async () => {
     try {
-      const meRes = await fetch(`${API}/api/auth/me`, { headers });
+      const meRes = await fetch(`${API_URL}/api/auth/me`, { headers });
       if (meRes.ok) setUser(await meRes.json());
 
       const params = new URLSearchParams();
       if (search) params.append('search', search);
       if (skillFilter) params.append('skill', skillFilter);
-      const res = await fetch(`${API}/api/jobs?${params}`, { headers });
+      const res = await fetch(`${API_URL}/api/jobs?${params}`, { headers });
       const data = await res.json();
       const jobList = Array.isArray(data) ? data : [];
       setJobs(jobList);
@@ -66,7 +66,7 @@ const JobListings = () => {
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const res = await fetch(`${API}/api/candidate/upload-cv`, { method: 'POST', headers, body: fd });
+      const res = await fetch(`${API_URL}/api/candidate/upload-cv`, { method: 'POST', headers, body: fd });
       if (res.ok) {
         await fetchJobs(); // Refresh user data and scores
       }
@@ -80,7 +80,7 @@ const JobListings = () => {
     }
     setApplyingId(jobId);
     try {
-      const res = await fetch(`${API}/api/candidate/apply/${jobId}`, {
+      const res = await fetch(`${API_URL}/api/candidate/apply/${jobId}`, {
         method: 'POST',
         headers,
       });

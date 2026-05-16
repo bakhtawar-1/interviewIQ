@@ -5,7 +5,7 @@ import {
   Briefcase, GraduationCap, Star, Save, ArrowLeft, Info, HelpCircle, FileText
 } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+import { API_URL } from '../config';
 
 const CandidateProfile = () => {
   const navigate = useNavigate();
@@ -28,7 +28,7 @@ const CandidateProfile = () => {
 
   const fetchProfile = async () => {
     try {
-      const res = await fetch(`${API}/api/candidate/profile`, { headers });
+      const res = await fetch(`${API_URL}/api/candidate/profile`, { headers });
       if (res.status === 401) { navigate('/signin'); return; }
       const data = await res.json();
       setProfile(data);
@@ -50,7 +50,7 @@ const CandidateProfile = () => {
     setErrorMsg('');
     setSuccessMsg('');
     try {
-      const res = await fetch(`${API}/api/candidate/profile`, {
+      const res = await fetch(`${API_URL}/api/candidate/profile`, {
         method: 'PATCH',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -75,7 +75,7 @@ const CandidateProfile = () => {
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const res = await fetch(`${API}/api/candidate/upload-cv`, {
+      const res = await fetch(`${API_URL}/api/candidate/upload-cv`, {
         method: 'POST',
         headers,
         body: fd,
@@ -99,7 +99,7 @@ const CandidateProfile = () => {
     setErrorMsg('');
     setSuccessMsg('');
     setShowConfirm(false);
-    const targetUrl = `${API}/api/candidate/remove-cv`;
+    const targetUrl = `${API_URL}/api/candidate/remove-cv`;
     try {
       const res = await fetch(targetUrl, {
         method: 'POST',

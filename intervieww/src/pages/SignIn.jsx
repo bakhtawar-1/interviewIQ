@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, Eye, EyeOff, ArrowRight, Mail, Lock } from 'lucide-react';
 
+import { API_URL } from '../config';
+
 const SignIn = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -28,7 +30,7 @@ const SignIn = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:8000/api/auth/login', {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -51,7 +53,7 @@ const SignIn = () => {
 
       localStorage.setItem('token', data.access_token);
 
-      const meRes = await fetch('http://localhost:8000/api/auth/me', {
+      const meRes = await fetch(`${API_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${data.access_token}` },
       });
       if (meRes.ok) {
@@ -80,7 +82,7 @@ const SignIn = () => {
     setSuccessMsg('');
 
     try {
-      const res = await fetch('http://localhost:8000/api/auth/forgot-password', {
+      const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: forgotEmail }),
@@ -107,7 +109,7 @@ const SignIn = () => {
     setSuccessMsg('');
 
     try {
-      const res = await fetch('http://localhost:8000/api/auth/reset-password', {
+      const res = await fetch(`${API_URL}/api/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: forgotEmail, otp_code: otp, new_password: newPassword }),

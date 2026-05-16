@@ -10,7 +10,7 @@ import {
   Upload, FileText, Briefcase, Loader, CornerDownRight
 } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+import { API_URL } from '../config';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QUESTIONS BANK
@@ -862,7 +862,7 @@ export default function VideoInterview() {
     // 1. Fetch official job config and custom questions
     if (stateData.jobId) {
       try {
-        const jobRes = await fetch(`${API}/api/jobs/${stateData.jobId}`);
+        const jobRes = await fetch(`${API_URL}/api/jobs/${stateData.jobId}`);
         if (jobRes.ok) {
           const jobData = await jobRes.json();
           if (jobData.total_questions) qCount = jobData.total_questions;
@@ -891,7 +891,7 @@ export default function VideoInterview() {
       aiQs = cvData.questions || [];
     } else {
       try {
-        const res = await fetch(`${API}/api/interview/questions`, {
+        const res = await fetch(`${API_URL}/api/interview/questions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ role: jobRole, category: interviewType, count: qCount }),
@@ -938,7 +938,7 @@ export default function VideoInterview() {
   const startBackendInterview = async () => {
     if (!token) return { ok: false, detail: 'You are not signed in. Open Dashboard and sign in as a candidate.' };
     try {
-      const res = await fetch(`${API}/api/candidate/interviews`, {
+      const res = await fetch(`${API_URL}/api/candidate/interviews`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1011,7 +1011,7 @@ export default function VideoInterview() {
       body.proctoring_violations = violationsLog;
     }
     try {
-      const res = await fetch(`${API}/api/candidate/interviews/${interviewId}/video-complete`, {
+      const res = await fetch(`${API_URL}/api/candidate/interviews/${interviewId}/video-complete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1049,7 +1049,7 @@ export default function VideoInterview() {
     backendInterviewIdRef.current = startedInterviewId;
     setBackendInterviewId(startedInterviewId);
     try {
-      await fetch(`${API}/api/candidate/interviews/${startedInterviewId}/video-complete`, {
+      await fetch(`${API_URL}/api/candidate/interviews/${startedInterviewId}/video-complete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1105,7 +1105,7 @@ export default function VideoInterview() {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout
-      const res = await fetch(`${API}/api/interview/score-answer`, {
+      const res = await fetch(`${API_URL}/api/interview/score-answer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -1191,7 +1191,7 @@ export default function VideoInterview() {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s timeout for followup
-      const fRes = await fetch(`${API}/api/interview/followup`, {
+      const fRes = await fetch(`${API_URL}/api/interview/followup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ previous_question: q.text, previous_answer: ans, score, breakdown }),
@@ -1302,7 +1302,7 @@ export default function VideoInterview() {
     const handleBeforeUnload = () => {
       // Use keepalive: true to ensure the request finishes even if the page is closed
       const body = JSON.stringify({ status: 'disqualified' });
-      fetch(`${API}/api/candidate/interviews/${backendInterviewId}/video-complete`, {
+      fetch(`${API_URL}/api/candidate/interviews/${backendInterviewId}/video-complete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1376,7 +1376,7 @@ export default function VideoInterview() {
                     const form = new FormData();
                     form.append('file', file);
                     try {
-                      const res = await fetch(`${API}/api/interview/upload-cv`, { method:'POST', body: form });
+                      const res = await fetch(`${API_URL}/api/interview/upload-cv`, { method:'POST', body: form });
                       const data = await res.json();
                       if (!res.ok || data.cv?.is_valid === false || data.error) {
                         setCvError(data.detail || data.cv?.error || data.error || 'Failed to parse CV.');

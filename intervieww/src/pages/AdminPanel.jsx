@@ -7,7 +7,7 @@ import {
   PieChart, Activity, RefreshCw
 } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+import { API_URL } from '../config';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -51,28 +51,28 @@ const AdminPanel = () => {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch(`${API}/api/admin/stats`, { headers });
+      const res = await fetch(`${API_URL}/api/admin/stats`, { headers });
       if (res.ok) setStats(await res.json());
     } catch {}
   };
 
   const fetchPendingRecruiters = async () => {
     try {
-      const res = await fetch(`${API}/api/admin/recruiters/pending`, { headers });
+      const res = await fetch(`${API_URL}/api/admin/recruiters/pending`, { headers });
       if (res.ok) setPendingRecruiters(await res.json());
     } catch {}
   };
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch(`${API}/api/admin/users`, { headers });
+      const res = await fetch(`${API_URL}/api/admin/users`, { headers });
       if (res.ok) setUsers(await res.json());
     } catch {}
   };
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch(`${API}/api/admin/settings`, { headers });
+      const res = await fetch(`${API_URL}/api/admin/settings`, { headers });
       if (res.ok) setSettings(await res.json());
     } catch {}
   };
@@ -80,7 +80,7 @@ const AdminPanel = () => {
   const handleApprove = async (userId, action, reason = '') => {
     setRefreshing(true);
     try {
-      const res = await fetch(`${API}/api/admin/recruiters/${userId}/${action}`, {
+      const res = await fetch(`${API_URL}/api/admin/recruiters/${userId}/${action}`, {
         method: 'PATCH',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason })
@@ -101,7 +101,7 @@ const AdminPanel = () => {
   const saveSettings = async () => {
     setRefreshing(true);
     try {
-      const res = await fetch(`${API}/api/admin/settings`, {
+      const res = await fetch(`${API_URL}/api/admin/settings`, {
         method: 'PATCH',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify(settings)

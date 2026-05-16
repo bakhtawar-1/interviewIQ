@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowLeft, ArrowRight, Plus, Trash2, CheckCircle } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+import { API_URL } from '../config';
 
 const STEPS = ['Job Details', 'Interview Settings', 'Custom Questions', 'Review & Post'];
 
@@ -40,12 +40,12 @@ const PostJob = () => {
     setError('');
     try {
       const payload = { ...form, cv_match_threshold: Number(form.cv_match_threshold), total_questions: Number(form.total_questions), ai_question_ratio: Number(form.ai_question_ratio), time_limit_minutes: Number(form.time_limit_minutes), passing_score: Number(form.passing_score), deadline: form.deadline || null };
-      const res = await fetch(`${API}/api/recruiter/jobs`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const res = await fetch(`${API_URL}/api/recruiter/jobs`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Failed to post job');
       const jobId = data.id;
       for (const q of customQuestions) {
-        await fetch(`${API}/api/recruiter/jobs/${jobId}/questions`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(q) });
+        await fetch(`${API_URL}/api/recruiter/jobs/${jobId}/questions`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(q) });
       }
       setPostedJob(data);
     } catch (e) { setError(e.message); }

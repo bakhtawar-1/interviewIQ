@@ -6,7 +6,7 @@ import {
   FileText, Activity, Search
 } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+import { API_URL } from '../config';
 
 const RecruiterJobManagement = () => {
   const { jobId } = useParams();
@@ -21,7 +21,7 @@ const RecruiterJobManagement = () => {
   useEffect(() => {
     const fetchJob = async () => {
       try {
-        const res = await fetch(`${API}/api/recruiter/jobs/${jobId}`, { headers });
+        const res = await fetch(`${API_URL}/api/recruiter/jobs/${jobId}`, { headers });
         if (!res.ok) throw new Error('Job not found');
         const data = await res.json();
         setJob(data);

@@ -7,7 +7,7 @@ import {
   TrendingUp, Star
 } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+import { API_URL } from '../config';
 
 const STATUS_MAP = {
   applied: { label: 'Applied', color: 'text-zinc-500 bg-zinc-800 border-zinc-700' },
@@ -42,13 +42,13 @@ const RecruiterJobApplications = () => {
     setLoading(true);
     try {
       // 1. Fetch Job
-      const jobRes = await fetch(`${API}/api/recruiter/jobs/${jobId}`, { headers });
+      const jobRes = await fetch(`${API_URL}/api/recruiter/jobs/${jobId}`, { headers });
       if (!jobRes.ok) throw new Error('Job not found');
       const jobData = await jobRes.json();
       setJob(jobData);
 
       // 2. Fetch Applications for this job
-      const appsRes = await fetch(`${API}/api/recruiter/applications?job_id=${jobId}`, { headers });
+      const appsRes = await fetch(`${API_URL}/api/recruiter/applications?job_id=${jobId}`, { headers });
       if (!appsRes.ok) throw new Error('Failed to load applications');
       const appsData = await appsRes.json();
       

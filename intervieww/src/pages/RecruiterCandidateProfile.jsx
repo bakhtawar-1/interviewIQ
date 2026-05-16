@@ -9,7 +9,7 @@ import {
   Download,
 } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+import { API_URL } from '../config';
 
 const RecruiterCandidateProfile = () => {
   const { candidateId } = useParams();
@@ -33,7 +33,7 @@ const RecruiterCandidateProfile = () => {
     setListError('');
     setDownloadError('');
     const headers = { Authorization: `Bearer ${token}` };
-    const meRes = await fetch(`${API}/api/auth/me`, { headers });
+    const meRes = await fetch(`${API_URL}/api/auth/me`, { headers });
     if (meRes.status === 401) {
       navigate('/signin');
       return;
@@ -53,7 +53,7 @@ const RecruiterCandidateProfile = () => {
       return;
     }
 
-    const cRes = await fetch(`${API}/api/recruiter/candidates`, { headers });
+    const cRes = await fetch(`${API_URL}/api/recruiter/candidates`, { headers });
     if (!cRes.ok) {
       setListError('Could not load candidates.');
       setLoading(false);
@@ -63,7 +63,7 @@ const RecruiterCandidateProfile = () => {
     const c = all.find((x) => x.id === idNum);
     setCandidate(c || null);
 
-    const iRes = await fetch(`${API}/api/recruiter/candidates/${idNum}/interviews`, { headers });
+    const iRes = await fetch(`${API_URL}/api/recruiter/candidates/${idNum}/interviews`, { headers });
     if (!iRes.ok) {
       const err = await iRes.json().catch(() => ({}));
       setListError(err.detail || 'Failed to load interviews.');
@@ -83,7 +83,7 @@ const RecruiterCandidateProfile = () => {
     setDownloadingId(inv.id);
     try {
       const r = await fetch(
-        `${API}/api/recruiter/interviews/${inv.id}/report-document`,
+        `${API_URL}/api/recruiter/interviews/${inv.id}/report-document`,
         { headers: authHeaders }
       );
       if (!r.ok) {
