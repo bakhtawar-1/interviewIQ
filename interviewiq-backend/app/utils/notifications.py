@@ -40,9 +40,7 @@ def _send_email(to: str, subject: str, body_html: str) -> bool:
         msg["From"] = FROM_EMAIL
         msg["To"] = to
         msg.attach(MIMEText(body_html, "html"))
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=30) as server:
-            server.ehlo()
-            server.starttls()
+        with smtplib.SMTP_SSL(SMTP_HOST, 465, timeout=30) as server:
             server.login(SMTP_USER, SMTP_PASS)
             server.sendmail(FROM_EMAIL, [to], msg.as_string())
         return True
