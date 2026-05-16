@@ -26,9 +26,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "http://127.0.0.1:3000",
         "http://localhost:5173",
-        "http://127.0.0.1:5173",
+        "https://interviewiq-nu.vercel.app",
+        "https://interview-kh6v8acdv-bakhtawarbaig91-4537s-projects.vercel.app",
+        "*",  # temporary - allows all origins
     ],
     allow_credentials=True,
     allow_methods=["*"],
