@@ -27,27 +27,30 @@ SMTP_PASS = os.getenv("SMTP_PASS", "")
 FROM_EMAIL = os.getenv("FROM_EMAIL", "noreply@interviewiq.com")
 
 
+import urllib.request
+import json
+
 def _send_email(to: str, subject: str, body_html: str) -> bool:
-    """Send an email. Returns True on success, False on failure."""
-    if not SMTP_HOST or not SMTP_USER:
-        logger.info(
-            "[EMAIL STUB] To: %s | Subject: %s\n%s",
-            to, subject, body_html
-        )
+    api_key = os.getenv("RESEND_API_KEY", "")
+    if not api_key:
+        logger.info("[EMAIL STUB] To: %s | Subject: %s", to, subject)
         return True
-
     try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = FROM_EMAIL
-        msg["To"] = to
-        msg.attach(MIMEText(body_html, "html"))
-
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
-            server.ehlo()
-            server.starttls()
-            server.login(SMTP_USER, SMTP_PASS)
-            server.sendmail(FROM_EMAIL, [to], msg.as_string())
+        payload = json.dumps({
+            "from": "InterviewIQ <onboarding@resend.dev>",
+            "to": [to],
+            "subject": subject,
+            "html": body_html
+        }).encode()
+        req = urllib.request.Request(
+            "https://api.resend.com/emails",
+            data=payload,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+        )
+        urllib.request.urlopen(req, timeout=10)
         return True
     except Exception as e:
         logger.error("Email send failed to %s: %s", to, e)
