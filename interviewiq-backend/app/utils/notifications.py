@@ -31,26 +31,20 @@ import urllib.request
 import json
 
 def _send_email(to: str, subject: str, body_html: str) -> bool:
-    api_key = os.getenv("BREVO_API_KEY", "")
-    if not api_key:
+    if not SMTP_HOST or not SMTP_USER:
         logger.info("[EMAIL STUB] To: %s | Subject: %s", to, subject)
         return True
     try:
-        payload = json.dumps({
-            "sender": {"name": "InterviewIQ", "email": "admin.interviewiq@gmail.com"},
-            "to": [{"email": to}],
-            "subject": subject,
-            "htmlContent": body_html
-        }).encode()
-        req = urllib.request.Request(
-            "https://api.brevo.com/v3/smtp/email",
-            data=payload,
-            headers={
-                "api-key": api_key,
-                "Content-Type": "application/json"
-            }
-        )
-        urllib.request.urlopen(req, timeout=10)
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = FROM_EMAIL
+        msg["To"] = to
+        msg.attach(MIMEText(body_html, "html"))
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
+            server.ehlo()
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASS)
+            server.sendmail(FROM_EMAIL, [to], msg.as_string())
         return True
     except Exception as e:
         logger.error("Email send failed to %s: %s", to, e)
