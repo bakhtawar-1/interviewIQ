@@ -31,22 +31,22 @@ import urllib.request
 import json
 
 def _send_email(to: str, subject: str, body_html: str) -> bool:
-    api_key = os.getenv("RESEND_API_KEY", "")
+    api_key = os.getenv("BREVO_API_KEY", "")
     if not api_key:
         logger.info("[EMAIL STUB] To: %s | Subject: %s", to, subject)
         return True
     try:
         payload = json.dumps({
-            "from": "InterviewIQ <onboarding@resend.dev>",
-            "to": [to],
+            "sender": {"name": "InterviewIQ", "email": "admin.interviewiq@gmail.com"},
+            "to": [{"email": to}],
             "subject": subject,
-            "html": body_html
+            "htmlContent": body_html
         }).encode()
         req = urllib.request.Request(
-            "https://api.resend.com/emails",
+            "https://api.brevo.com/v3/smtp/email",
             data=payload,
             headers={
-                "Authorization": f"Bearer {api_key}",
+                "api-key": api_key,
                 "Content-Type": "application/json"
             }
         )
